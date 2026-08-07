@@ -11,29 +11,6 @@ use crate::{
 
 pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let root = PathBuf::from("../example");
-    // <?xml version="1.0" encoding="UTF-8"?>
-    // <module type="JAVA_MODULE" version="4">
-    //   <component name="NewModuleRootManager" inherit-compiler-output="true">
-    //     <exclude-output />
-    //     <content url="file://$MODULE_DIR$">
-    //       <sourceFolder url="file://$MODULE_DIR$/src/client/java" isTestSource="false" />
-    //       <sourceFolder url="file://$MODULE_DIR$/src/client/resources" type="java-resource" />
-    //       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
-    //       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
-    //     </content>
-    //     <orderEntry type="inheritedJdk" />
-    //     <orderEntry type="sourceFolder" forTests="false" />
-    //     <orderEntry type="module-library" scope="PROVIDED">
-    //       <library>
-    //         <CLASSES>
-    //           <root url="jar://$MODULE_DIR$/../../.fabuild/net.fabricmc.fabric-api/fabric-game-rule-api-v1/4.0.8+46a6d00c9e/fabric-game-rule-api-v1-4.0.8+46a6d00c9e.jar!/" />
-    //         </CLASSES>
-    //         <JAVADOC />
-    //         <SOURCES />
-    //       </library>
-    //     </orderEntry>
-    //   </component>
-    // </module>
     let mut out = r#"<?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
     <component name="NewModuleRootManager" inherit-compiler-output="true">
@@ -52,7 +29,7 @@ pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let project = load_root_project(&root)?;
     let registry = load_default_registry();
     let jregistry = load_default_jregistry();
-    let tree = load_project_tree(&root, project, &registry)?;
+    let tree = load_project_tree(&root, &project, &registry)?;
 
     let entries = tree.gather_classpath(
         &root,

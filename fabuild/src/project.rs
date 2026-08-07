@@ -126,10 +126,7 @@ impl FabuildProjectTree {
         // now, resolve the main project
         if should_resolve_root {
             out.push(ClasspathEntry {
-                classes: vec![format!(
-                    "{}/target/class",
-                    std::fs::canonicalize(root)?.display()
-                )],
+                classes: vec![format!("{}/target/classes", root.canonicalize()?.display())],
                 sources: vec![],
             });
         }
@@ -158,7 +155,7 @@ pub fn load_root_project(root: &Path) -> anyhow::Result<FabuildProject> {
 /// This is expected to be called on the *root* project only.
 pub fn load_project_tree(
     root: &Path,
-    project: FabuildProject,
+    project: &FabuildProject,
     registry: &FabuildRegistry,
 ) -> anyhow::Result<FabuildProjectTree> {
     fn resolve_dependencies(
@@ -215,10 +212,10 @@ pub fn load_project_tree(
 
     let mut packages = vec![];
 
-    resolve_dependencies(&mut packages, &project, registry)?;
+    resolve_dependencies(&mut packages, project, registry)?;
 
     let tree = FabuildProjectTree {
-        root: project,
+        root: project.clone(),
         packages,
     };
 

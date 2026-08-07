@@ -1,14 +1,13 @@
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{path::PathBuf, process::Command};
+
+use anyhow::Context;
 
 use crate::{
     ProgramEmptySubCommand,
     jregistry::load_default_jregistry,
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
-    util::SystemArchitecture,
+    util::generate_classpath,
 };
 
 pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
@@ -20,12 +19,7 @@ pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
             if file_type.is_dir() {
                 iter_folder(sources, &entry.path())?;
             } else if file_type.is_file() {
-                if Path::new(&entry.file_name())
-                    .extension()
-                    .is_some_and(|ext| ext.eq_ignore_ascii_case("java"))
-                {
-                    sources.push(entry.path());
-                }
+                sources.push(entry.path());
             } else {
                 anyhow::bail!("unhandled file type: {file_type:#?}");
             }
@@ -39,19 +33,12 @@ pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let project = load_root_project(&root)?;
     let registry = load_default_registry();
     let jregistry = load_default_jregistry();
-    let tree = load_project_tree(&root, project, &registry)?;
-    let entries = tree.gather_classpath(
-        &root,
-        &jregistry,
-        SystemArchitecture::Auto.resolve(),
-        true,
-        true,
-    )?;
-    let classes: Vec<String> = entries.iter().flat_map(|s| s.classes.clone()).collect();
-    std::fs::write(root.join("target").join("classpath.tmp"), classes.join(";"))?;
+    let tree = load_project_tree(&root, &project, &registry)?;
+    generate_classpath(&root, &jregistry, &tree)?;
 
     let mut sources = vec![];
-    iter_folder(&mut sources, &root.join("src"))?;
+    iter_folder(&mut sources, &root.join("src/main/java"))?;
+    iter_folder(&mut sources, &root.join("src/client/java"))?;
 
     // TODO: compare the current javac and the javac from JAVA_HOME
     Command::new("javac")
@@ -63,9 +50,54 @@ pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
             "@{}",
             root.join("target").join("classpath.tmp").display()
         ))
-        .current_dir(root)
+        .current_dir(&root)
         .spawn()?
         .wait()?;
+
+    // copy resources for now, later on, we can pre-process them!
+    let mut resources = vec![];
+    iter_folder(&mut resources, &root.join("src/main/resources"))?;
+    iter_folder(&mut resources, &root.join("src/client/resources"))?;
+
+    for resource in &resources {
+        let from = resource;
+        let to = root.join("target").join("classes").join(
+            resource
+                .canonicalize()?
+                .display()
+                .to_string()
+                .trim_start_matches(
+                    &root
+                        .join("src")
+                        .join("main")
+                        .join("resources")
+                        .canonicalize()?
+                        .display()
+                        .to_string(),
+                )
+                .trim_start_matches(
+                    &root
+                        .join("src")
+                        .join("client")
+                        .join("resources")
+                        .canonicalize()?
+                        .display()
+                        .to_string(),
+                )
+                .trim_start_matches('/')
+                .trim_start_matches('\\'),
+        );
+        std::fs::create_dir_all(
+            to.parent().ok_or_else(|| {
+                anyhow::anyhow!("failed to find parent folder of {}", to.display())
+            })?,
+        )?;
+        std::fs::copy(from, &to).context(format!(
+            "copying resource from {} to {}",
+            from.display(),
+            to.display()
+        ))?;
+    }
 
     Ok(())
 }
