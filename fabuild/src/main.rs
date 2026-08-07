@@ -24,6 +24,7 @@ pub struct ProgramClasspathArgs {
 #[derive(Args, Debug)]
 enum ProgramSubCommand {
     Init(ProgramEmptySubCommand),
+    Build(ProgramEmptySubCommand),
     Classpath(ProgramClasspathArgs),
     Intellij(ProgramEmptySubCommand),
 }
@@ -41,6 +42,7 @@ fn main() -> anyhow::Result<()> {
 
     match args.cmd {
         ProgramSubCommand::Init(args) => tasks::init::run(&args),
+        ProgramSubCommand::Build(args) => tasks::build::run(&args),
         ProgramSubCommand::Classpath(args) => tasks::classpath::run(&args),
         ProgramSubCommand::Intellij(args) => tasks::intellij::run(&args),
     }

@@ -11,20 +11,6 @@ pub struct FabuildPackage {
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FabuildJava {
-    pub version: String,
-}
-
-impl Default for FabuildJava {
-    fn default() -> Self {
-        // TODO
-        Self {
-            version: String::from("25"),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct FabuildPackageVersionNatives {
     pub x86: Vec<String>,
@@ -43,8 +29,6 @@ pub struct FabuildPackageVersion {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FabuildProject {
     pub package: FabuildPackage,
-    #[serde(default)]
-    pub java: FabuildJava,
     pub dependencies: HashMap<String, String>,
     pub versions: HashMap<String, FabuildPackageVersion>,
 }
@@ -52,8 +36,6 @@ pub struct FabuildProject {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FabuildResolvedProject {
     pub package: FabuildPackage,
-    #[serde(default)]
-    pub java: FabuildJava,
     pub dependencies: HashMap<String, String>,
     pub version: FabuildPackageVersion,
     pub current_version: String,
@@ -206,7 +188,6 @@ pub fn load_project_tree(
             let name = format!("{}.{}", p.package.path, p.package.name);
             let resolved = FabuildResolvedProject {
                 package: p.package,
-                java: p.java,
                 dependencies: p.dependencies,
                 version: p
                     .versions
