@@ -14,12 +14,20 @@ pub fn run(args: &ProgramClasspathArgs) -> anyhow::Result<()> {
     let registry = load_default_registry();
     let jregistry = load_default_jregistry();
     let tree = load_project_tree(&root, project, &registry)?;
+    let entries = tree.gather_classpath(&root, &jregistry, args.arch.resolve(), true)?;
 
-    println!(
-        "{}",
-        tree.gather_classpath(&root, &jregistry, args.sources, args.arch.resolve())?
-            .join(";")
-    );
+    let mut out = Vec::new();
+
+    for entry in entries {
+        let t = if args.sources {
+            entry.sources
+        } else {
+            entry.classes
+        };
+        out.extend_from_slice(&t);
+    }
+
+    println!("{}", out.join(";"));
 
     Ok(())
 }

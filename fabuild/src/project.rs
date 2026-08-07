@@ -75,63 +75,79 @@ pub struct FabuildProjectTree {
     pub packages: Vec<FabuildResolvedProject>,
 }
 
+pub struct ClasspathEntry {
+    pub classes: Vec<String>,
+    pub sources: Vec<String>,
+}
+
 impl FabuildProjectTree {
+    /// Returns (Vec<Classpath>, Vec<Sourcepath>)
     pub fn gather_classpath(
         &self,
         root: &Path,
         jregistry: &FabuildJRegistry,
-        sources: bool,
         architecture: SystemArchitecture,
-    ) -> anyhow::Result<Vec<String>> {
+        should_resolve_root: bool,
+    ) -> anyhow::Result<Vec<ClasspathEntry>> {
         anyhow::ensure!(
             architecture != SystemArchitecture::Auto,
             "resolve the architecture before passing it onto any functions"
         );
 
-        let mut out: Vec<String> = Vec::new();
+        let mut out = Vec::new();
 
         // resolve dependencies first
         for package in &self.packages {
-            if sources {
-                for filename in &package.version.sources {
-                    let resolved = jregistry.resolve_jar(
-                        &package.get_full_name(),
-                        &package.current_version,
-                        filename,
-                    )?;
-                    out.push(resolved.display().to_string());
-                }
-            } else {
-                for filename in &package.version.runtime {
-                    let resolved = jregistry.resolve_jar(
-                        &package.get_full_name(),
-                        &package.current_version,
-                        filename,
-                    )?;
-                    out.push(resolved.display().to_string());
-                }
+            let mut entry = ClasspathEntry {
+                classes: vec![],
+                sources: vec![],
+            };
 
-                for filename in match architecture {
-                    SystemArchitecture::X86 => &package.version.natives.x86,
-                    SystemArchitecture::X64 => &package.version.natives.x64,
-                    SystemArchitecture::Arm64 => &package.version.natives.arm64,
-                    SystemArchitecture::Auto => unreachable!(),
-                } {
-                    let resolved = jregistry.resolve_jar(
-                        &package.get_full_name(),
-                        &package.current_version,
-                        filename,
-                    )?;
-                    out.push(resolved.display().to_string());
-                }
+            for filename in &package.version.sources {
+                let resolved = jregistry.resolve_jar(
+                    &package.get_full_name(),
+                    &package.current_version,
+                    filename,
+                )?;
+                entry.sources.push(resolved.display().to_string());
             }
+
+            for filename in &package.version.runtime {
+                let resolved = jregistry.resolve_jar(
+                    &package.get_full_name(),
+                    &package.current_version,
+                    filename,
+                )?;
+                entry.classes.push(resolved.display().to_string());
+            }
+
+            for filename in match architecture {
+                SystemArchitecture::X86 => &package.version.natives.x86,
+                SystemArchitecture::X64 => &package.version.natives.x64,
+                SystemArchitecture::Arm64 => &package.version.natives.arm64,
+                SystemArchitecture::Auto => unreachable!(),
+            } {
+                let resolved = jregistry.resolve_jar(
+                    &package.get_full_name(),
+                    &package.current_version,
+                    filename,
+                )?;
+                entry.classes.push(resolved.display().to_string());
+            }
+
+            out.push(entry);
         }
 
         // now, resolve the main project
-        out.push(format!(
-            "{}/target/class",
-            std::fs::canonicalize(root)?.display()
-        ));
+        if should_resolve_root {
+            out.push(ClasspathEntry {
+                classes: vec![format!(
+                    "{}/target/class",
+                    std::fs::canonicalize(root)?.display()
+                )],
+                sources: vec![],
+            });
+        }
 
         Ok(out)
     }
