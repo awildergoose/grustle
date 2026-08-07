@@ -1,0 +1,10 @@
+[package]
+name = "fabric"
+path = ""
+
+[dependencies]
+"net.fabricmc.fabric-api.fabric-api" = "0.155.2+26.2"
+
+[versions."0.155.2+26.2"]
+runtime = []
+sources = []
