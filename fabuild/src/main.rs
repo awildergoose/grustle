@@ -26,6 +26,7 @@ enum ProgramSubCommand {
     Init(ProgramEmptySubCommand),
     Build(ProgramEmptySubCommand),
     Run(ProgramEmptySubCommand),
+    Jar(ProgramEmptySubCommand),
     Classpath(ProgramClasspathArgs),
     Intellij(ProgramEmptySubCommand),
 }
@@ -45,6 +46,7 @@ fn main() -> anyhow::Result<()> {
         ProgramSubCommand::Init(args) => tasks::init::run(&args),
         ProgramSubCommand::Build(args) => tasks::build::run(&args),
         ProgramSubCommand::Run(args) => tasks::run::run(&args),
+        ProgramSubCommand::Jar(args) => tasks::jar::run(&args),
         ProgramSubCommand::Classpath(args) => tasks::classpath::run(&args),
         ProgramSubCommand::Intellij(args) => tasks::intellij::run(&args),
     }

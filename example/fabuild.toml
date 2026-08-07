@@ -1,6 +1,7 @@
 [package]
 name = "example"
 path = "com.example"
+version = "1.0.0"
 
 [dependencies]
 fabric = "0.19.3"
