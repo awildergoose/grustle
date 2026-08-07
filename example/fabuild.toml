@@ -1,0 +1,21 @@
+[package]
+name = "example"
+path = "com.example"
+
+[java]
+version = "25"
+
+[dependencies]
+"net.fabricmc.fabric-loader" = "0.19.3"
+"net.fabricmc.fabric-log4j-util" = "1.0.2"
+"net.fabricmc.dev-launch-injector" = "0.2.1+build.8"
+"net.fabricmc.sponge-mixin" = "0.17.3+mixin.0.8.7"
+"io.github.llamalad7.mixinextras-fabric" = "0.5.4"
+
+"net.fabricmc.fabric-api.fabric-api" = "0.155.2+26.2"
+minecraft = "26.2"
+minecraft-client = "26.2"
+
+[versions."1.0.0"]
+runtime = ["template-mod.jar"]
+sources = ["template-mod-sources.jar"]

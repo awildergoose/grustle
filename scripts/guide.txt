@@ -1,0 +1,19 @@
+(unix-like)
+
+to build:
+    javac $(find src -type f -name '*.java') -d target/class -cp @target/classpath.txt
+    copy -R src/main  /resources/* target/class
+    copy -R src/client/resources/* target/class
+
+to package:
+	cd target/class && jar cvf ../template-mod.jar .
+
+to runClient:
+    java -cp @target/classpath.txt                                                 ^
+        -Dfabric.classPathGroups=G:/steve/fabuild/target/class                     ^
+        -Dfabric.dli.config=G:/steve/fabuild/example/target/launch.cfg             ^
+        -Dfabric.dli.env=client                                                    ^
+        -Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient          ^
+        --sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED   ^
+        -Dfile.encoding=UTF-8 -Duser.country=US -Duser.language=en -Duser.variant  ^
+        net.fabricmc.devlaunchinjector.Main
