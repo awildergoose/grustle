@@ -46,7 +46,7 @@ pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
         </content>
         <orderEntry type="inheritedJdk" />
         <orderEntry type="sourceFolder" forTests="false" />
-"#
+        "#
     .to_string();
 
     let project = load_root_project(&root)?;
@@ -54,8 +54,13 @@ pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let jregistry = load_default_jregistry();
     let tree = load_project_tree(&root, project, &registry)?;
 
-    let entries =
-        tree.gather_classpath(&root, &jregistry, SystemArchitecture::Auto.resolve(), false)?;
+    let entries = tree.gather_classpath(
+        &root,
+        &jregistry,
+        SystemArchitecture::Auto.resolve(),
+        false,
+        false,
+    )?;
 
     for entry in &entries {
         let mut classes = String::new();
@@ -84,13 +89,15 @@ pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
                     {sources}
                 </SOURCES>
             </library>
-        </orderEntry>"#
+        </orderEntry>
+        "#
         )?;
     }
 
     out = out.trim().to_owned();
 
-    out += r"    </component>
+    out += r"
+    </component>
 </module>";
 
     println!("{out}");

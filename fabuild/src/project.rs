@@ -88,6 +88,7 @@ impl FabuildProjectTree {
         jregistry: &FabuildJRegistry,
         architecture: SystemArchitecture,
         should_resolve_root: bool,
+        include_natives: bool,
     ) -> anyhow::Result<Vec<ClasspathEntry>> {
         anyhow::ensure!(
             architecture != SystemArchitecture::Auto,
@@ -121,18 +122,20 @@ impl FabuildProjectTree {
                 entry.classes.push(resolved.display().to_string());
             }
 
-            for filename in match architecture {
-                SystemArchitecture::X86 => &package.version.natives.x86,
-                SystemArchitecture::X64 => &package.version.natives.x64,
-                SystemArchitecture::Arm64 => &package.version.natives.arm64,
-                SystemArchitecture::Auto => unreachable!(),
-            } {
-                let resolved = jregistry.resolve_jar(
-                    &package.get_full_name(),
-                    &package.current_version,
-                    filename,
-                )?;
-                entry.classes.push(resolved.display().to_string());
+            if include_natives {
+                for filename in match architecture {
+                    SystemArchitecture::X86 => &package.version.natives.x86,
+                    SystemArchitecture::X64 => &package.version.natives.x64,
+                    SystemArchitecture::Arm64 => &package.version.natives.arm64,
+                    SystemArchitecture::Auto => unreachable!(),
+                } {
+                    let resolved = jregistry.resolve_jar(
+                        &package.get_full_name(),
+                        &package.current_version,
+                        filename,
+                    )?;
+                    entry.classes.push(resolved.display().to_string());
+                }
             }
 
             out.push(entry);
