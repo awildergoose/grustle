@@ -1,5 +1,5 @@
 [package]
-name = "fabric"
+name = "fabric-api"
 path = ""
 
 [dependencies]
