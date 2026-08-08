@@ -114,6 +114,14 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     iter_folder(&mut resources, &root.join("src/main/resources"))?;
     iter_folder(&mut resources, &root.join("src/client/resources"))?;
 
+    for (_, task) in threads {
+        progress.remove_task(task);
+    }
+
+    let task = progress.add_task("Copying resources...", Some(resources.len() as u64), true);
+
+    println!();
+
     for resource in &resources {
         let from = resource;
         let to = root.join("target").join("classes").join(
@@ -152,6 +160,12 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
             from.display(),
             to.display()
         ))?;
+
+        progress.advance(task, 1)?;
+        let output = progress.render(40);
+        print!("\x1b[1A");
+        print!("{}", output.to_ansi());
+        let _ = std::io::stdout().flush();
     }
 
     Ok(())
