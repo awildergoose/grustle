@@ -14,6 +14,12 @@ use crate::util::SystemArchitecture;
 pub struct ProgramEmptySubCommand {}
 
 #[derive(Args, Debug)]
+pub struct ProgramBuildSubCommand {
+    #[arg(short, long, default_value = "2")]
+    pub jobs: usize,
+}
+
+#[derive(Args, Debug)]
 pub struct ProgramClasspathArgs {
     #[arg(short, long, default_value = "false")]
     pub sources: bool,
@@ -24,7 +30,7 @@ pub struct ProgramClasspathArgs {
 #[derive(Args, Debug)]
 enum ProgramSubCommand {
     Init(ProgramEmptySubCommand),
-    Build(ProgramEmptySubCommand),
+    Build(ProgramBuildSubCommand),
     Run(ProgramEmptySubCommand),
     Jar(ProgramEmptySubCommand),
     Classpath(ProgramClasspathArgs),
