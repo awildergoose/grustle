@@ -1,3 +1,4 @@
+pub mod aw;
 pub mod build;
 pub mod classpath;
 pub mod init;

@@ -23,33 +23,41 @@ pub fn invoke_class_tweakers(
         include_bytes!("../tools/qt.jar"),
     )?;
 
-    Command::new("java")
-        .arg("-jar")
-        .arg(root.join("target").join("qt.jar"))
-        .arg(jregistry.resolve_file("minecraft", game_version, "minecraft.jar")?) // minecraft shared jar
-        .arg(jregistry.resolve_file("minecraft", game_version, "mappings.tiny")?) // mappings
-        .arg(root.join("target").join("classtweakers")) // class tweakers folder
-        .arg(root.join("target").join("game").join("minecraft.jar")) // final jar
-        .spawn()?
-        .wait()?;
+    anyhow::ensure!(
+        Command::new("java")
+            .arg("-jar")
+            .arg(root.join("target").join("qt.jar"))
+            .arg(jregistry.resolve_file("minecraft", game_version, "minecraft.jar")?) // minecraft shared jar
+            .arg(jregistry.resolve_file("minecraft", game_version, "mappings.tiny")?) // mappings
+            .arg(root.join("target").join("classtweakers")) // class tweakers folder
+            .arg(root.join("target").join("game").join("minecraft.jar")) // final jar
+            .spawn()?
+            .wait()?
+            .success(),
+        "failed to run classtweakers for minecraft"
+    );
 
-    Command::new("java")
-        .arg("-jar")
-        .arg(root.join("target").join("qt.jar"))
-        .arg(jregistry.resolve_file(
-            "minecraft-client",
-            game_client_version,
-            "minecraft-client.jar",
-        )?) // minecraft client jar
-        .arg(jregistry.resolve_file("minecraft-client", game_client_version, "mappings.tiny")?) // mappings
-        .arg(root.join("target").join("classtweakers")) // class tweakers folder
-        .arg(
-            root.join("target")
-                .join("game")
-                .join("minecraft-client.jar"),
-        ) // final jar
-        .spawn()?
-        .wait()?;
+    anyhow::ensure!(
+        Command::new("java")
+            .arg("-jar")
+            .arg(root.join("target").join("qt.jar"))
+            .arg(jregistry.resolve_file(
+                "minecraft-client",
+                game_client_version,
+                "minecraft-client.jar",
+            )?) // minecraft client jar
+            .arg(jregistry.resolve_file("minecraft", game_version, "mappings.tiny")?) // mappings
+            .arg(root.join("target").join("classtweakers")) // class tweakers folder
+            .arg(
+                root.join("target")
+                    .join("game")
+                    .join("minecraft-client.jar"),
+            ) // final jar
+            .spawn()?
+            .wait()?
+            .success(),
+        "failed to run classtweakers for minecraft-client"
+    );
 
     Ok(())
 }
