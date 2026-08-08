@@ -102,13 +102,13 @@ impl FabuildProjectTree {
 
             for filename in &package.version.sources {
                 let resolved =
-                    jregistry.resolve_jar(&package.get_full_name(), &package.ver, filename)?;
+                    jregistry.resolve_file(&package.get_full_name(), &package.ver, filename)?;
                 entry.sources.push(resolved.display().to_string());
             }
 
             for filename in &package.version.runtime {
                 let resolved =
-                    jregistry.resolve_jar(&package.get_full_name(), &package.ver, filename)?;
+                    jregistry.resolve_file(&package.get_full_name(), &package.ver, filename)?;
                 entry.classes.push(resolved.display().to_string());
             }
 
@@ -120,7 +120,7 @@ impl FabuildProjectTree {
                     SystemArchitecture::Auto => unreachable!(),
                 } {
                     let resolved =
-                        jregistry.resolve_jar(&package.get_full_name(), &package.ver, filename)?;
+                        jregistry.resolve_file(&package.get_full_name(), &package.ver, filename)?;
                     entry.classes.push(resolved.display().to_string());
                 }
             }

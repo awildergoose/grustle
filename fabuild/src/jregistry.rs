@@ -11,7 +11,7 @@ impl FabuildJRegistry {
         Self { root }
     }
 
-    fn resolve_path(&self, name: &str, version: &str) -> anyhow::Result<PathBuf> {
+    pub fn resolve_path(&self, name: &str, version: &str) -> anyhow::Result<PathBuf> {
         let split = name
             .split('.')
             .map(std::borrow::ToOwned::to_owned)
@@ -29,7 +29,7 @@ impl FabuildJRegistry {
         Ok(path)
     }
 
-    pub fn resolve_jar(
+    pub fn resolve_file(
         &self,
         name: &str,
         version: &str,

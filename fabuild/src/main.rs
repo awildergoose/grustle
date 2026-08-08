@@ -4,6 +4,7 @@ pub mod jregistry;
 pub mod project;
 pub mod registry;
 pub mod tasks;
+pub mod tweaker;
 pub mod util;
 
 use arg::Args;

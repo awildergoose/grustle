@@ -88,7 +88,7 @@ clientProperties
             .canonicalize()?
             .display(), // log4j.configurationFile
         jregistry
-            .resolve_jar("minecraft", game_version, "minecraft.jar")?
+            .resolve_file("minecraft", game_version, "minecraft.jar")?
             .canonicalize()?
             .display(), // fabric.gameJarPath
         root.join("target")
@@ -97,7 +97,7 @@ clientProperties
             .display(), // fabric.classPathGroups
         std::env::var("FABUILD_ASSETS_DIRECTORY")?, // assetsDir
         jregistry
-            .resolve_jar(
+            .resolve_file(
                 "minecraft-client",
                 game_client_version,
                 "minecraft-client.jar"
