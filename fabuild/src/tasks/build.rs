@@ -11,12 +11,13 @@ use richrs::prelude::*;
 use crate::{
     ProgramBuildSubCommand,
     jregistry::load_default_jregistry,
+    preprocessing::sources::preprocess_source_file,
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
     tweaker::{get_class_tweakers, invoke_class_tweakers},
     util::{
         generate_classpath, get_target_classes_folder, get_target_classpath_file,
-        get_target_classtweakers_folder, split_jobs,
+        get_target_classtweakers_folder, get_target_sources_file, split_jobs,
     },
 };
 
@@ -67,6 +68,48 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     let mut sources = vec![];
     iter_folder(&mut sources, &root.join("src/main/java"))?;
     iter_folder(&mut sources, &root.join("src/client/java"))?;
+
+    // preprocess the sources first
+    let target_sources = get_target_sources_file(&root);
+
+    std::fs::create_dir_all(&target_sources)?;
+
+    for file in &sources {
+        let target = target_sources.join(PathBuf::from(
+            &file
+                .canonicalize()?
+                .display()
+                .to_string()
+                .trim_start_matches(
+                    &root
+                        .join("src")
+                        .join("main")
+                        .join("java")
+                        .canonicalize()?
+                        .display()
+                        .to_string(),
+                )
+                .trim_start_matches(
+                    &root
+                        .join("src")
+                        .join("client")
+                        .join("java")
+                        .canonicalize()?
+                        .display()
+                        .to_string(),
+                )
+                .trim_start_matches('/')
+                .trim_start_matches('\\'),
+        ));
+        std::fs::create_dir_all(target.parent().ok_or_else(|| {
+            anyhow::anyhow!("failed to get parent of path {}", target.display())
+        })?)?;
+
+        preprocess_source_file(&tree, file, &target)?;
+    }
+
+    sources = vec![];
+    iter_folder(&mut sources, &target_sources)?;
 
     // TODO: compare the current javac and the javac from JAVA_HOME
     let command_args = vec![

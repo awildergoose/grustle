@@ -74,6 +74,11 @@ pub fn get_target_aw_folder(root: &Path) -> PathBuf {
 }
 
 #[must_use]
+pub fn get_target_sources_file(root: &Path) -> PathBuf {
+    get_target_folder(root).join("sources")
+}
+
+#[must_use]
 pub fn get_target_classpath_file(root: &Path) -> PathBuf {
     get_target_folder(root).join("classpath.tmp")
 }

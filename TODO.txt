@@ -10,3 +10,5 @@
 - [x] clean up the target folder by structuring it better
 - [ ] generate sources command
 - [x] copy class tweakers from src/main/resources to target/classtweakers
+- [x] source code preprocessor
+- [ ] resource preprocessor (json ${defines})
