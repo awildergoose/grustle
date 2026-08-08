@@ -4,6 +4,7 @@
 	"version": "1.0.0",
 	"name": "Template Mod",
 	"description": "This is an example description! Tell everyone what your mod is about!",
+    "accessWidener": "template-mod.classtweaker",
 	"authors": [
 		"Me!"
 	],

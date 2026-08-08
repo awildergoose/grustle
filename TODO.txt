@@ -7,3 +7,6 @@
 - [ ] multi-version and multi-loader support (stonecutter-like preprocessor)
 - [ ] neoforge support
 - [ ] warn of package name (groupId.artifactId) conflicts
+- [ ] clean up the target folder by structuring it better
+- [ ] generate sources command
+- [ ] copy class tweakers from src/main/resources to target/classtweakers
