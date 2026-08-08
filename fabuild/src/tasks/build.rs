@@ -8,7 +8,7 @@ use crate::{
     jregistry::load_default_jregistry,
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
-    util::generate_classpath,
+    util::{generate_classpath, split_jobs},
 };
 
 #[allow(clippy::too_many_lines)]
@@ -53,10 +53,10 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     let mut threads = vec![];
     let mut progress = Progress::new();
 
-    for tasks in sources.chunks(args.jobs) {
+    for tasks in split_jobs(sources, args.jobs) {
         threads.push((
             Command::new("javac")
-                .args(tasks)
+                .args(tasks.clone())
                 .args(command_args.clone())
                 .current_dir(&root)
                 .spawn()?,
@@ -64,10 +64,16 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                 tasks
                     .iter()
                     .map(|s| {
+                        let filename = s
+                            .file_name()
+                            .ok_or_else(|| anyhow::anyhow!("non UTF-8 filename!"))?
+                            .to_string_lossy();
+
                         Ok::<String, anyhow::Error>(
-                            s.file_name()
-                                .ok_or_else(|| anyhow::anyhow!("non UTF-8 filename!"))?
-                                .to_string_lossy()
+                            filename
+                                .split('.')
+                                .next()
+                                .unwrap_or_else(|| &filename)
                                 .to_string(),
                         )
                     })
@@ -81,9 +87,10 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     }
 
     let output = progress.render(40);
-    print!("\x1b[{}A", 3);
     print!("{}", output.to_ansi());
     let _ = std::io::stdout().flush();
+
+    let thread_count = threads.len();
 
     for (thread, task) in &mut threads {
         thread.wait()?;
@@ -97,7 +104,7 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                 .ok_or_else(|| unreachable!())?,
         )?;
         let output = progress.render(40);
-        print!("\x1b[{}A", 3);
+        print!("\x1b[{thread_count}A");
         print!("{}", output.to_ansi());
         let _ = std::io::stdout().flush();
     }

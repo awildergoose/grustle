@@ -129,6 +129,37 @@ pub fn generate_classpath(
     Ok(())
 }
 
+pub fn split_jobs<I>(iter: I, n: usize) -> Vec<Vec<I::Item>>
+where
+    I: IntoIterator,
+{
+    let items: Vec<_> = iter.into_iter().collect();
+    let total_len = items.len();
+
+    if n == 0 || total_len == 0 {
+        return vec![];
+    }
+
+    let chunk_size = total_len / n;
+
+    if chunk_size == 0 {
+        return items.into_iter().map(|item| vec![item]).collect();
+    }
+
+    let mut chunks = Vec::with_capacity(n);
+    let mut drain = items.into_iter();
+
+    for _ in 0..(n - 1) {
+        let chunk: Vec<_> = drain.by_ref().take(chunk_size).collect();
+        chunks.push(chunk);
+    }
+
+    let last_chunk: Vec<_> = drain.collect();
+    chunks.push(last_chunk);
+
+    chunks
+}
+
 static LOG4J_CONFIG: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
 	<Appenders>
