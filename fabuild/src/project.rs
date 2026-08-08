@@ -10,7 +10,7 @@ pub struct FabuildPackage {
     pub name: String,
     pub path: String,
     #[serde(default)]
-    pub version: String,
+    pub ver: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -32,7 +32,7 @@ pub struct FabuildPackageVersion {
 pub struct FabuildProject {
     pub package: FabuildPackage,
     pub dependencies: HashMap<String, String>,
-    pub versions: HashMap<String, FabuildPackageVersion>,
+    pub version: FabuildPackageVersion,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -40,7 +40,7 @@ pub struct FabuildResolvedProject {
     pub package: FabuildPackage,
     pub dependencies: HashMap<String, String>,
     pub version: FabuildPackageVersion,
-    pub current_version: String,
+    pub ver: String,
 }
 
 impl FabuildResolvedProject {
@@ -101,20 +101,14 @@ impl FabuildProjectTree {
             };
 
             for filename in &package.version.sources {
-                let resolved = jregistry.resolve_jar(
-                    &package.get_full_name(),
-                    &package.current_version,
-                    filename,
-                )?;
+                let resolved =
+                    jregistry.resolve_jar(&package.get_full_name(), &package.ver, filename)?;
                 entry.sources.push(resolved.display().to_string());
             }
 
             for filename in &package.version.runtime {
-                let resolved = jregistry.resolve_jar(
-                    &package.get_full_name(),
-                    &package.current_version,
-                    filename,
-                )?;
+                let resolved =
+                    jregistry.resolve_jar(&package.get_full_name(), &package.ver, filename)?;
                 entry.classes.push(resolved.display().to_string());
             }
 
@@ -125,11 +119,8 @@ impl FabuildProjectTree {
                     SystemArchitecture::Arm64 => &package.version.natives.arm64,
                     SystemArchitecture::Auto => unreachable!(),
                 } {
-                    let resolved = jregistry.resolve_jar(
-                        &package.get_full_name(),
-                        &package.current_version,
-                        filename,
-                    )?;
+                    let resolved =
+                        jregistry.resolve_jar(&package.get_full_name(), &package.ver, filename)?;
                     entry.classes.push(resolved.display().to_string());
                 }
             }
@@ -193,23 +184,14 @@ pub fn load_project_tree(
                 continue;
             }
 
-            let p = parse_project(&registry.resolve_package(dependency)?)
+            let p = parse_project(&registry.resolve_package(dependency, version)?)
                 .context(format!("loading {dependency}"))?;
             resolve_dependencies(packages, &p, registry)?;
-            let name = format!("{}.{}", p.package.path, p.package.name);
             let resolved = FabuildResolvedProject {
                 package: p.package,
                 dependencies: p.dependencies,
-                version: p
-                    .versions
-                    .get(version)
-                    .ok_or_else(|| {
-                        anyhow::anyhow!(
-                            "failed to get version {version} for {name} (required by {parent_name})",
-                        )
-                    })?
-                    .clone(),
-                current_version: version.clone()
+                version: p.version,
+                ver: version.clone(),
             };
             packages.push(resolved);
         }

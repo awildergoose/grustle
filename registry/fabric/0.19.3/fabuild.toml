@@ -1,6 +1,7 @@
 [package]
 name = "fabric"
 path = ""
+ver = "0.19.3"
 
 [dependencies]
 "net.fabricmc.fabric-loader" = "0.19.3"
@@ -9,6 +10,6 @@ path = ""
 "net.fabricmc.sponge-mixin" = "0.17.3+mixin.0.8.7"
 "io.github.llamalad7.mixinextras-fabric" = "0.5.4"
 
-[versions."0.19.3"]
+[version]
 runtime = []
 sources = []

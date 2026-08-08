@@ -9,13 +9,13 @@ for line in reg:
     pkgVersion = line.split("\\")[2]
     filename = line.split("\\")[4]
 
-    with open(f"../registry/{javaPath}/{pkgName}/fabuild.toml", "r") as f:
+    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "r") as f:
         content = f.read()
     
-    content = content.replace(f"""[versions.\"{pkgVersion}\".natives]
+    content = content.replace(f"""[version.natives]
 x64 = []
 x86 = []
 arm64 = []
 """, "")
-    with open(f"../registry/{javaPath}/{pkgName}/fabuild.toml", "w") as f:
+    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "w") as f:
         f.write(content)

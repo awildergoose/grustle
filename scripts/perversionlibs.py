@@ -41,21 +41,22 @@ dependencies = dependencies.strip()
 out = f"""[package]
 name = "minecraft"
 path = ""
+ver = "{game_version}"
 
 [dependencies]
 {dependencies}
 
-[versions."{game_version}"]
+[version]
 runtime = [\"minecraft.jar\"]
 sources = [\"minecraft-sources.jar\"]
 """
 
 try:
-    os.makedirs("../registry/minecraft")
+    os.makedirs(f"../registry/minecraft/{game_version}")
 except Exception:
     pass
 
-with open("../registry/minecraft/fabuild.toml", "w") as f:
+with open(f"../registry/minecraft/{game_version}/fabuild.toml", "w") as f:
     f.write(out)
 
 
@@ -66,15 +67,15 @@ path = ""
 [dependencies]
 {dependencies}
 
-[versions."{game_version}"]
+[version]
 runtime = [\"minecraft-client.jar\"]
 sources = [\"minecraft-client-sources.jar\"]
 """
 
 try:
-    os.makedirs("../registry/minecraft-client")
+    os.makedirs(f"../registry/minecraft-client/{game_version}")
 except Exception:
     pass
 
-with open("../registry/minecraft-client/fabuild.toml", "w") as f:
+with open(f"../registry/minecraft-client/{game_version}/fabuild.toml", "w") as f:
     f.write(out)

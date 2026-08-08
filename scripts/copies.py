@@ -67,16 +67,16 @@ for line in reg:
 
         runtimeJars.append(jar)
 
-    f = open(f"../registry/{javaPath}/{pkgName}/fabuild.toml", "r")
+    f = open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "r")
     data = toml.loads(f.read())
     f.close()
-    data["versions"][pkgVersion]["runtime"] = runtimeJars
-    data["versions"][pkgVersion]["sources"] = sourcesJars
-    data["versions"][pkgVersion]["natives"]["x64"] = nativesX64Jars
-    data["versions"][pkgVersion]["natives"]["x86"] = nativesX86Jars
-    data["versions"][pkgVersion]["natives"]["arm64"] = nativesArm64Jars
+    data["version"]["runtime"] = runtimeJars
+    data["version"]["sources"] = sourcesJars
+    data["version"]["natives"]["x64"] = nativesX64Jars
+    data["version"]["natives"]["x86"] = nativesX86Jars
+    data["version"]["natives"]["arm64"] = nativesArm64Jars
 
-    with open(f"../registry/{javaPath}/{pkgName}/fabuild.toml", "w") as f:
+    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "w") as f:
         out = toml.dumps(data)
         
         # Prettify

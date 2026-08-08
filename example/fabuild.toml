@@ -1,7 +1,7 @@
 [package]
 name = "example"
 path = "com.example"
-version = "1.0.0"
+ver = "1.0.0"
 
 [dependencies]
 fabric = "0.19.3"
@@ -9,6 +9,6 @@ fabric-api = "0.155.2+26.2"
 minecraft = "26.2"
 minecraft-client = "26.2"
 
-[versions."1.0.0"]
+[version]
 runtime = ["template-mod.jar"]
 sources = ["template-mod-sources.jar"]

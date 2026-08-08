@@ -10,19 +10,20 @@ for line in reg:
     filename = line.split("\\")[4]
     
     try:
-        os.makedirs(f"../registry/{javaPath}/{pkgName}")
+        os.makedirs(f"../registry/{javaPath}/{pkgName}/{pkgVersion}")
     except Exception:
         pass
     
     toml = f"""[package]
 name = "{pkgName}"
 path = "{javaPath}"
+ver = "{pkgVersion}"
 
-[versions."{pkgVersion}"]
+[version]
 runtime = []
 sources = []
 
-[versions."{pkgVersion}".natives]
+[version.natives]
 x64 = []
 x86 = []
 arm64 = []
@@ -31,6 +32,6 @@ arm64 = []
 
 """
     
-    with open(f"../registry/{javaPath}/{pkgName}/fabuild.toml", "w") as f:
+    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "w") as f:
         f.write(toml)
         f.close()

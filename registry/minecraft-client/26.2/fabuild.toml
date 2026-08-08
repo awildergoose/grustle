@@ -58,6 +58,6 @@ path = ""
 "org.lwjgl.lwjgl" = "3.4.1"
 "org.slf4j.slf4j-api" = "2.0.17"
 
-[versions."26.2"]
+[version]
 runtime = ["minecraft-client.jar"]
 sources = ["minecraft-client-sources.jar"]

@@ -6,16 +6,7 @@ pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let root = PathBuf::from("../example");
 
     let project = load_root_project(&root)?;
-    let version = project
-        .versions
-        .get(&project.package.version)
-        .ok_or_else(|| {
-            anyhow::anyhow!(
-                "version \"{}\" not found in root project ({})",
-                project.package.version,
-                project.get_full_name()
-            )
-        })?;
+    let version = &project.version;
 
     Command::new("jar")
         .arg("cvf")
