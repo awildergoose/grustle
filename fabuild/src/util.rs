@@ -1,9 +1,13 @@
-use std::{path::Path, str::FromStr};
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use crate::{
     jregistry::FabuildJRegistry,
     project::{FabuildProject, FabuildProjectTree},
 };
+use anyhow::Context;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum SystemArchitecture {
@@ -44,9 +48,49 @@ impl SystemArchitecture {
     }
 }
 
+#[must_use]
+pub fn get_target_folder(root: &Path) -> PathBuf {
+    root.join("target")
+}
+
+#[must_use]
+pub fn get_target_classes_folder(root: &Path) -> PathBuf {
+    get_target_folder(root).join("classes")
+}
+
+#[must_use]
+pub fn get_target_launch_folder(root: &Path) -> PathBuf {
+    get_target_folder(root).join("launch")
+}
+
+#[must_use]
+pub fn get_target_classtweakers_folder(root: &Path) -> PathBuf {
+    get_target_folder(root).join("classtweakers")
+}
+
+#[must_use]
+pub fn get_target_aw_folder(root: &Path) -> PathBuf {
+    get_target_folder(root).join("aw")
+}
+
+#[must_use]
+pub fn get_target_classpath_file(root: &Path) -> PathBuf {
+    get_target_folder(root).join("classpath.tmp")
+}
+
+#[must_use]
+pub fn get_target_qt_file(root: &Path) -> PathBuf {
+    get_target_aw_folder(root).join("qt.jar")
+}
+
+#[must_use]
+pub fn get_run_folder(root: &Path) -> PathBuf {
+    root.join("run")
+}
+
 pub fn generate_log4j_config(root: &Path) -> anyhow::Result<()> {
     Ok(std::fs::write(
-        root.join("target").join("log4j.xml"),
+        get_target_launch_folder(root).join("log4j.xml"),
         LOG4J_CONFIG,
     )?)
 }
@@ -56,6 +100,8 @@ pub fn generate_launch_config(
     jregistry: &FabuildJRegistry,
     project: &FabuildProject,
 ) -> anyhow::Result<()> {
+    let launch = get_target_launch_folder(root);
+
     let game_version = project
         .dependencies
         .get("minecraft")
@@ -64,6 +110,7 @@ pub fn generate_launch_config(
         .dependencies
         .get("minecraft-client")
         .ok_or_else(|| anyhow::anyhow!("minecraft-client is not in the dependency list!"))?;
+
     // TODO: assetIndex here is always 32
     let launch_cfg = format!(
         r"commonProperties
@@ -83,10 +130,7 @@ clientArgs
 clientProperties
 	fabric.gameJarPath.client={}
 ",
-        root.join("target")
-            .join("log4j.xml")
-            .canonicalize()?
-            .display(), // log4j.configurationFile
+        launch.join("log4j.xml").canonicalize()?.display(), // log4j.configurationFile
         jregistry
             .resolve_file("minecraft", game_version, "minecraft.jar")?
             .canonicalize()?
@@ -95,7 +139,8 @@ clientProperties
             .join("classes")
             .canonicalize()?
             .display(), // fabric.classPathGroups
-        std::env::var("FABUILD_ASSETS_DIRECTORY")?, // assetsDir
+        std::env::var("FABUILD_ASSETS_DIRECTORY")
+            .context("FABUILD_ASSETS_DIRECTORY is not set!")?, // assetsDir
         jregistry
             .resolve_file(
                 "minecraft-client",
@@ -106,7 +151,8 @@ clientProperties
             .display(), // fabric.gameJarPath.client
     );
 
-    std::fs::write(root.join("target").join("launch.cfg"), launch_cfg)?;
+    std::fs::create_dir_all(&launch)?;
+    std::fs::write(launch.join("launch.cfg"), launch_cfg)?;
 
     Ok(())
 }
@@ -124,7 +170,7 @@ pub fn generate_classpath(
         true,
     )?;
     let classes: Vec<String> = entries.iter().flat_map(|s| s.classes.clone()).collect();
-    std::fs::write(root.join("target").join("classpath.tmp"), classes.join(";"))?;
+    std::fs::write(get_target_classpath_file(root), classes.join(";"))?;
 
     Ok(())
 }

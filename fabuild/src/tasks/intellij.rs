@@ -9,7 +9,7 @@ use crate::{
     util::SystemArchitecture,
 };
 
-pub fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
+pub fn run(_: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let root = PathBuf::from("../example");
     let mut out = r#"<?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">

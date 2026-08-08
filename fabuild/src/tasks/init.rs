@@ -1,5 +1,5 @@
 use crate::ProgramEmptySubCommand;
 
-pub const fn run(_args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
+pub const fn run(_: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     Ok(())
 }

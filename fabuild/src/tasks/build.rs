@@ -8,7 +8,7 @@ use crate::{
     jregistry::load_default_jregistry,
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
-    util::{generate_classpath, split_jobs},
+    util::{generate_classpath, get_target_classes_folder, get_target_classpath_file, split_jobs},
 };
 
 #[allow(clippy::too_many_lines)]
@@ -45,9 +45,9 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     // TODO: compare the current javac and the javac from JAVA_HOME
     let command_args = vec![
         "-d".to_owned(),
-        root.join("target").join("classes").display().to_string(),
+        get_target_classes_folder(&root).display().to_string(),
         "-cp".to_owned(),
-        format!("@{}", root.join("target").join("classpath.tmp").display()),
+        format!("@{}", get_target_classpath_file(&root).display()),
     ];
 
     let mut threads = vec![];
@@ -91,9 +91,12 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     let _ = std::io::stdout().flush();
 
     let thread_count = threads.len();
+    let mut ok = true;
 
     for (thread, task) in &mut threads {
-        thread.wait()?;
+        if !thread.wait()?.success() {
+            ok = false;
+        }
 
         progress.advance(
             *task,
@@ -108,6 +111,8 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
         print!("{}", output.to_ansi());
         let _ = std::io::stdout().flush();
     }
+
+    anyhow::ensure!(ok, "failed to compile java code");
 
     // copy resources for now, later on, we can pre-process them!
     let mut resources = vec![];
@@ -124,7 +129,7 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
 
     for resource in &resources {
         let from = resource;
-        let to = root.join("target").join("classes").join(
+        let to = get_target_classes_folder(&root).join(
             resource
                 .canonicalize()?
                 .display()
