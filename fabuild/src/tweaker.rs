@@ -32,11 +32,15 @@ pub fn invoke_class_tweakers(
     let game_version = project
         .dependencies
         .get("minecraft")
-        .ok_or_else(|| anyhow::anyhow!("minecraft is not in the dependency list!"))?;
-    let game_client_version = project
+        .ok_or_else(|| anyhow::anyhow!("minecraft is not in the dependency list!"))?
+        .version
+        .clone();
+    let game_client_version = &project
         .dependencies
         .get("minecraft-client")
-        .ok_or_else(|| anyhow::anyhow!("minecraft-client is not in the dependency list!"))?;
+        .ok_or_else(|| anyhow::anyhow!("minecraft-client is not in the dependency list!"))?
+        .version
+        .clone();
 
     let target_classtweakers = get_target_classtweakers_folder(root);
     let target_game = get_target_aw_folder(root);
@@ -55,12 +59,12 @@ pub fn invoke_class_tweakers(
             .arg(get_target_qt_file(root))
             .arg(
                 jregistry
-                    .resolve_path("minecraft", game_version)?
+                    .resolve_path("minecraft", &game_version)?
                     .join("minecraft.jar")
             ) // minecraft shared jar
             .arg(
                 jregistry
-                    .resolve_path("minecraft", game_version)?
+                    .resolve_path("minecraft", &game_version)?
                     .join("mappings.tiny")
             ) // mappings
             .arg(&target_classtweakers) // class tweakers folder
@@ -82,7 +86,7 @@ pub fn invoke_class_tweakers(
             ) // minecraft client jar
             .arg(
                 jregistry
-                    .resolve_path("minecraft", game_version)?
+                    .resolve_path("minecraft", &game_version)?
                     .join("mappings.tiny")
             ) // mappings
             .arg(&target_classtweakers) // class tweakers folder

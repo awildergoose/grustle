@@ -9,6 +9,7 @@ use crate::{
     util::{SystemArchitecture, get_target_classes_folder},
 };
 
+// Spaghetti
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FabuildPackage {
     pub name: String,
@@ -33,21 +34,50 @@ pub struct FabuildPackageVersion {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FabuildProject {
+pub struct FabuildDependency {
+    pub version: String,
+    #[serde(default)]
+    pub embedded: bool,
+    #[serde(default)]
+    pub location: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(untagged)]
+pub enum FabuildSeDependency {
+    Versioned(String),
+    Full(FabuildDependency),
+}
+
+impl FabuildSeDependency {
+    #[must_use]
+    pub fn resolve(&self) -> FabuildDependency {
+        match self {
+            Self::Versioned(v) => FabuildDependency {
+                version: v.clone(),
+                embedded: false,
+                location: String::new(),
+            },
+            Self::Full(d) => d.clone(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct FabuildSeProject {
     pub package: FabuildPackage,
-    pub dependencies: HashMap<String, String>,
+    pub dependencies: HashMap<String, FabuildSeDependency>,
     pub version: FabuildPackageVersion,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FabuildResolvedProject {
+pub struct FabuildProject {
     pub package: FabuildPackage,
-    pub dependencies: HashMap<String, String>,
+    pub dependencies: HashMap<String, FabuildDependency>,
     pub version: FabuildPackageVersion,
-    pub ver: String,
 }
 
-impl FabuildResolvedProject {
+impl FabuildProject {
     #[must_use]
     pub fn get_full_name(&self) -> String {
         if self.package.path.is_empty() {
@@ -58,7 +88,15 @@ impl FabuildResolvedProject {
     }
 }
 
-impl FabuildProject {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct FabuildResolvedProject {
+    pub package: FabuildPackage,
+    pub dependencies: HashMap<String, FabuildDependency>,
+    pub version: FabuildPackageVersion,
+    pub ver: String,
+}
+
+impl FabuildResolvedProject {
     #[must_use]
     pub fn get_full_name(&self) -> String {
         if self.package.path.is_empty() {
@@ -160,8 +198,20 @@ impl FabuildProjectTree {
 }
 
 pub fn parse_project(text: &str) -> anyhow::Result<FabuildProject> {
-    toml::from_str(text)
-        .map_err(|e| anyhow::anyhow!(format!("Failed to parse Fabuild project: {e:#?}")))
+    let parsed = toml::from_str::<FabuildSeProject>(text)
+        .map_err(|e| anyhow::anyhow!(format!("Failed to parse Fabuild project: {e:#?}")))?;
+
+    let project = FabuildProject {
+        package: parsed.package,
+        version: parsed.version,
+        dependencies: parsed
+            .dependencies
+            .iter()
+            .map(|d| (d.0.clone(), d.1.resolve()))
+            .collect::<_>(),
+    };
+
+    Ok(project)
 }
 
 pub fn load_root_project(root: &Path) -> anyhow::Result<FabuildProject> {
@@ -193,24 +243,27 @@ pub fn load_project_tree(
             return Ok(());
         }
 
-        for (dependency, version) in &package.dependencies {
-            if *dependency == parent_name {
-                println!("circular dependency found! {dependency}");
+        for (dependency_name, dependency) in &package.dependencies {
+            if *dependency_name == parent_name {
+                println!("circular dependency found! {dependency_name}");
                 break;
             }
 
-            if packages.iter().any(|p| p.get_full_name().eq(dependency)) {
+            if packages
+                .iter()
+                .any(|p| p.get_full_name().eq(dependency_name))
+            {
                 continue;
             }
 
-            let p = parse_project(&registry.resolve_package(dependency, version)?)
-                .context(format!("loading {dependency}"))?;
+            let p = parse_project(&registry.resolve_package(dependency_name, &dependency.version)?)
+                .context(format!("loading {dependency_name}"))?;
             resolve_dependencies(packages, &p, registry)?;
             let resolved = FabuildResolvedProject {
                 package: p.package,
                 dependencies: p.dependencies,
                 version: p.version,
-                ver: version.clone(),
+                ver: dependency.version.clone(),
             };
             packages.push(resolved);
         }
@@ -246,8 +299,12 @@ pub fn load_project_tree(
         let real_content = split[3..].join("\n");
         let expected = format!("{:#X}", crc32fast::hash(&real_content.into_bytes()));
 
-        if expected == checksum {
-            return Ok(toml::from_str(&content)?);
+        let parsed = toml::from_str(&content);
+
+        if expected == checksum
+            && let Ok(parsed) = parsed
+        {
+            return Ok(parsed);
         }
 
         println!("hash mismatch, rebuilding lock!");

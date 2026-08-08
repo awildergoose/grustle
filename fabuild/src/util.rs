@@ -105,11 +105,15 @@ pub fn generate_launch_config(
     let game_version = project
         .dependencies
         .get("minecraft")
-        .ok_or_else(|| anyhow::anyhow!("minecraft is not in the dependency list!"))?;
+        .ok_or_else(|| anyhow::anyhow!("minecraft is not in the dependency list!"))?
+        .version
+        .clone();
     let game_client_version = project
         .dependencies
         .get("minecraft-client")
-        .ok_or_else(|| anyhow::anyhow!("minecraft-client is not in the dependency list!"))?;
+        .ok_or_else(|| anyhow::anyhow!("minecraft-client is not in the dependency list!"))?
+        .version
+        .clone();
 
     // TODO: assetIndex here is always 32
     let launch_cfg = format!(
@@ -132,7 +136,7 @@ clientProperties
 ",
         launch.join("log4j.xml").canonicalize()?.display(), // log4j.configurationFile
         jregistry
-            .resolve_file(root, "minecraft", game_version, "minecraft.jar")?
+            .resolve_file(root, "minecraft", &game_version, "minecraft.jar")?
             .canonicalize()?
             .display(), // fabric.gameJarPath
         get_target_classes_folder(root).canonicalize()?.display(), // fabric.classPathGroups
@@ -142,7 +146,7 @@ clientProperties
             .resolve_file(
                 root,
                 "minecraft-client",
-                game_client_version,
+                &game_client_version,
                 "minecraft-client.jar"
             )?
             .canonicalize()?
