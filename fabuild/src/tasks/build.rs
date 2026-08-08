@@ -8,7 +8,11 @@ use crate::{
     jregistry::load_default_jregistry,
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
-    util::{generate_classpath, get_target_classes_folder, get_target_classpath_file, split_jobs},
+    tweaker::{get_class_tweakers, invoke_class_tweakers},
+    util::{
+        generate_classpath, get_target_classes_folder, get_target_classpath_file,
+        get_target_classtweakers_folder, split_jobs,
+    },
 };
 
 #[allow(clippy::too_many_lines)]
@@ -37,6 +41,23 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     let jregistry = load_default_jregistry();
     let tree = load_project_tree(&root, &project, &registry)?;
     generate_classpath(&root, &jregistry, &tree)?;
+
+    // if the classtweakers changed,
+    for (new_path, new_filename) in get_class_tweakers(&root)? {
+        let old_path = get_target_classtweakers_folder(&root).join(new_filename);
+
+        if std::fs::exists(&old_path)? {
+            if !std::fs::read(&old_path)
+                .context(format!("reading from {}", old_path.display()))?
+                .eq(&std::fs::read(&new_path)
+                    .context(format!("reading from {}", new_path.display()))?)
+            {
+                invoke_class_tweakers(&root, &project, &jregistry)?;
+            }
+        } else {
+            invoke_class_tweakers(&root, &project, &jregistry)?;
+        }
+    }
 
     let mut sources = vec![];
     iter_folder(&mut sources, &root.join("src/main/java"))?;

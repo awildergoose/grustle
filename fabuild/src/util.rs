@@ -132,17 +132,15 @@ clientProperties
 ",
         launch.join("log4j.xml").canonicalize()?.display(), // log4j.configurationFile
         jregistry
-            .resolve_file("minecraft", game_version, "minecraft.jar")?
+            .resolve_file(root, "minecraft", game_version, "minecraft.jar")?
             .canonicalize()?
             .display(), // fabric.gameJarPath
-        root.join("target")
-            .join("classes")
-            .canonicalize()?
-            .display(), // fabric.classPathGroups
+        get_target_classes_folder(root).canonicalize()?.display(), // fabric.classPathGroups
         std::env::var("FABUILD_ASSETS_DIRECTORY")
             .context("FABUILD_ASSETS_DIRECTORY is not set!")?, // assetsDir
         jregistry
             .resolve_file(
+                root,
                 "minecraft-client",
                 game_client_version,
                 "minecraft-client.jar"

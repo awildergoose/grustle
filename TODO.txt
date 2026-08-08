@@ -1,7 +1,7 @@
 - [x] per-version fabuild.toml files
 - [ ] run server support
 - [ ] embedded jar support (shadowJar but better)
-- [ ] access widener support
+- [x] full class tweaker support
 - [ ] improve the registry system by specifying download locations
 - [ ] allow fabuild to download dependencies
 - [ ] multi-version and multi-loader support (stonecutter-like preprocessor)

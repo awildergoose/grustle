@@ -3,7 +3,11 @@ use std::{collections::HashMap, path::Path};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::{jregistry::FabuildJRegistry, registry::FabuildRegistry, util::SystemArchitecture};
+use crate::{
+    jregistry::FabuildJRegistry,
+    registry::FabuildRegistry,
+    util::{SystemArchitecture, get_target_classes_folder},
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FabuildPackage {
@@ -101,14 +105,22 @@ impl FabuildProjectTree {
             };
 
             for filename in &package.version.sources {
-                let resolved =
-                    jregistry.resolve_file(&package.get_full_name(), &package.ver, filename)?;
+                let resolved = jregistry.resolve_file(
+                    root,
+                    &package.get_full_name(),
+                    &package.ver,
+                    filename,
+                )?;
                 entry.sources.push(resolved.display().to_string());
             }
 
             for filename in &package.version.runtime {
-                let resolved =
-                    jregistry.resolve_file(&package.get_full_name(), &package.ver, filename)?;
+                let resolved = jregistry.resolve_file(
+                    root,
+                    &package.get_full_name(),
+                    &package.ver,
+                    filename,
+                )?;
                 entry.classes.push(resolved.display().to_string());
             }
 
@@ -119,8 +131,12 @@ impl FabuildProjectTree {
                     SystemArchitecture::Arm64 => &package.version.natives.arm64,
                     SystemArchitecture::Auto => unreachable!(),
                 } {
-                    let resolved =
-                        jregistry.resolve_file(&package.get_full_name(), &package.ver, filename)?;
+                    let resolved = jregistry.resolve_file(
+                        root,
+                        &package.get_full_name(),
+                        &package.ver,
+                        filename,
+                    )?;
                     entry.classes.push(resolved.display().to_string());
                 }
             }
@@ -131,7 +147,10 @@ impl FabuildProjectTree {
         // now, resolve the main project
         if should_resolve_root {
             out.push(ClasspathEntry {
-                classes: vec![format!("{}/target/classes", root.canonicalize()?.display())],
+                classes: vec![format!(
+                    "{}",
+                    get_target_classes_folder(root).canonicalize()?.display()
+                )],
                 sources: vec![],
             });
         }

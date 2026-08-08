@@ -1,10 +1,28 @@
-use std::{path::Path, process::Command};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use crate::{
     jregistry::FabuildJRegistry,
     project::FabuildProject,
     util::{get_target_aw_folder, get_target_classtweakers_folder, get_target_qt_file},
 };
+
+pub fn get_class_tweakers(root: &Path) -> anyhow::Result<Vec<(PathBuf, String)>> {
+    let mut list = vec![];
+
+    for ct in std::fs::read_dir(root.join("src").join("main").join("resources"))? {
+        let ct = ct?;
+
+        if ct.file_type()?.is_file() && ct.file_name().to_string_lossy().ends_with(".classtweaker")
+        {
+            list.push((ct.path(), ct.file_name().to_string_lossy().to_string()));
+        }
+    }
+
+    Ok(list)
+}
 
 pub fn invoke_class_tweakers(
     root: &Path,
@@ -27,21 +45,24 @@ pub fn invoke_class_tweakers(
     std::fs::create_dir_all(&target_game)?;
     std::fs::write(get_target_qt_file(root), include_bytes!("../tools/qt.jar"))?;
 
-    for ct in std::fs::read_dir(root.join("src").join("main").join("resources"))? {
-        let ct = ct?;
-
-        if ct.file_type()?.is_file() && ct.file_name().to_string_lossy().ends_with(".classtweaker")
-        {
-            std::fs::copy(ct.path(), target_classtweakers.join(ct.file_name()))?;
-        }
+    for (path, file_name) in get_class_tweakers(root)? {
+        std::fs::copy(path, target_classtweakers.join(file_name))?;
     }
 
     anyhow::ensure!(
         Command::new("java")
             .arg("-jar")
             .arg(get_target_qt_file(root))
-            .arg(jregistry.resolve_file("minecraft", game_version, "minecraft.jar")?) // minecraft shared jar
-            .arg(jregistry.resolve_file("minecraft", game_version, "mappings.tiny")?) // mappings
+            .arg(
+                jregistry
+                    .resolve_path("minecraft", game_version)?
+                    .join("minecraft.jar")
+            ) // minecraft shared jar
+            .arg(
+                jregistry
+                    .resolve_path("minecraft", game_version)?
+                    .join("mappings.tiny")
+            ) // mappings
             .arg(&target_classtweakers) // class tweakers folder
             .arg(target_game.join("minecraft.jar")) // final jar
             .spawn()?
@@ -54,12 +75,16 @@ pub fn invoke_class_tweakers(
         Command::new("java")
             .arg("-jar")
             .arg(get_target_qt_file(root))
-            .arg(jregistry.resolve_file(
-                "minecraft-client",
-                game_client_version,
-                "minecraft-client.jar",
-            )?) // minecraft client jar
-            .arg(jregistry.resolve_file("minecraft", game_version, "mappings.tiny")?) // mappings
+            .arg(
+                jregistry
+                    .resolve_path("minecraft-client", game_client_version)?
+                    .join("minecraft-client.jar")
+            ) // minecraft client jar
+            .arg(
+                jregistry
+                    .resolve_path("minecraft", game_version)?
+                    .join("mappings.tiny")
+            ) // mappings
             .arg(&target_classtweakers) // class tweakers folder
             .arg(target_game.join("minecraft-client.jar")) // final jar
             .spawn()?
