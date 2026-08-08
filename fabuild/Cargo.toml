@@ -10,3 +10,4 @@ crc32fast = "1.5.0"
 richrs = "0.2.1"
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.2"
+zip = "8.6.0"

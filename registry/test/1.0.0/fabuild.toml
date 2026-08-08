@@ -1,0 +1,10 @@
+[package]
+name = "test"
+path = ""
+ver = "1.0.0"
+
+[dependencies]
+
+[version]
+runtime = ["test.jar"]
+sources = []

@@ -1,4 +1,9 @@
-use std::{io::Write, path::PathBuf, process::Command};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::PathBuf,
+    process::Command,
+};
 
 use anyhow::Context;
 use richrs::prelude::*;
@@ -42,7 +47,7 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     let tree = load_project_tree(&root, &project, &registry)?;
     generate_classpath(&root, &jregistry, &tree)?;
 
-    // if the classtweakers changed,
+    // if the classtweakers changed, reinvoke quick-tweak
     for (new_path, new_filename) in get_class_tweakers(&root)? {
         let old_path = get_target_classtweakers_folder(&root).join(new_filename);
 
@@ -134,6 +139,59 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     }
 
     anyhow::ensure!(ok, "failed to compile java code");
+
+    // copy embedded jars' contents into there aswell!
+    for (name, dep) in project.dependencies {
+        if dep.embedded {
+            let pkg = tree
+                .packages
+                .iter()
+                .find(|p| p.get_full_name() == name)
+                .ok_or_else(|| {
+                    anyhow::anyhow!("package is not in the project tree? this should never happen")
+                })?;
+
+            for jar in &pkg.version.runtime {
+                let path = jregistry.resolve_file(&root, &name, &dep.version, jar)?;
+                let mut zip = zip::read::ZipArchive::new(
+                    File::open(&path).context(format!("opening jar at {}", path.display()))?,
+                )
+                .context(format!("parsing jar at {}", path.display()))?;
+
+                for index in 0..zip.len() {
+                    let mut file = zip.by_index(index)?;
+                    let filename = file.enclosed_name().context(format!(
+                        "unsafe zip file entry was found in {}",
+                        path.display()
+                    ))?;
+
+                    if filename.starts_with("META-INF") {
+                        continue;
+                    }
+
+                    let filepath = get_target_classes_folder(&root)
+                        .join(&dep.location)
+                        .join(&filename);
+                    let mut folder = filepath.clone();
+
+                    if file.is_file() {
+                        folder = folder
+                            .parent()
+                            .ok_or_else(|| {
+                                anyhow::anyhow!("no parent found for {}", folder.display())
+                            })?
+                            .to_path_buf();
+                    }
+
+                    std::fs::create_dir_all(folder)?;
+
+                    let mut contents = vec![];
+                    let _ = file.read_to_end(&mut contents)?;
+                    std::fs::write(filepath, contents)?;
+                }
+            }
+        }
+    }
 
     // copy resources for now, later on, we can pre-process them!
     let mut resources = vec![];

@@ -4,10 +4,11 @@ path = "com.example"
 ver = "1.0.0"
 
 [dependencies]
-fabric = { version = "0.19.3" }
+fabric = "0.19.3"
 fabric-api = "0.155.2+26.2"
 minecraft = "26.2"
 minecraft-client = "26.2"
+test = { version = "1.0.0", embedded = true, location = "test" }
 
 [version]
 runtime = ["template-mod.jar"]

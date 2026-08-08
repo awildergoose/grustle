@@ -1,6 +1,6 @@
 - [x] per-version fabuild.toml files
 - [ ] run server support
-- [ ] embedded jar support (shadowJar but better)
+- [x] embedded jar support (shadowJar but better)
 - [x] full class tweaker support
 - [ ] improve the registry system by specifying download locations
 - [ ] allow fabuild to download dependencies

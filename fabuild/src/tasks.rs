@@ -5,3 +5,4 @@ pub mod init;
 pub mod intellij;
 pub mod jar;
 pub mod run;
+pub mod sources;

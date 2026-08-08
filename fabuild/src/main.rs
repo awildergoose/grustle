@@ -1,6 +1,7 @@
 #![allow(clippy::missing_errors_doc)]
 
 pub mod jregistry;
+pub mod preprocessing;
 pub mod project;
 pub mod registry;
 pub mod tasks;
@@ -37,6 +38,7 @@ enum ProgramSubCommand {
     Classpath(ProgramClasspathArgs),
     Aw(ProgramEmptySubCommand),
     Intellij(ProgramEmptySubCommand),
+    Sources(ProgramEmptySubCommand),
 }
 
 #[derive(Args, Debug)]
@@ -58,5 +60,6 @@ fn main() -> anyhow::Result<()> {
         ProgramSubCommand::Classpath(args) => tasks::classpath::run(&args),
         ProgramSubCommand::Aw(args) => tasks::aw::run(&args),
         ProgramSubCommand::Intellij(args) => tasks::intellij::run(&args),
+        ProgramSubCommand::Sources(args) => tasks::sources::run(&args),
     }
 }
