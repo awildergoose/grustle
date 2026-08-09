@@ -1,5 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 
+pub mod error_parser;
 pub mod jregistry;
 pub mod preprocessing;
 pub mod project;
@@ -16,11 +17,7 @@ use crate::util::SystemArchitecture;
 pub struct ProgramEmptySubCommand {}
 
 #[derive(Args, Debug)]
-pub struct ProgramBuildSubCommand {
-    // TODO: remove this
-    #[arg(short, long, default_value = "2")]
-    pub jobs: usize,
-}
+pub struct ProgramBuildSubCommand {}
 
 #[derive(Args, Debug)]
 pub struct ProgramClasspathArgs {

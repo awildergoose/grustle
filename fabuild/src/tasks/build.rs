@@ -17,12 +17,12 @@ use crate::{
     tweaker::{get_class_tweakers, invoke_class_tweakers},
     util::{
         generate_classpath, get_target_classes_folder, get_target_classpath_file,
-        get_target_classtweakers_folder, get_target_sources_file, split_jobs,
+        get_target_classtweakers_folder, get_target_sources_file,
     },
 };
 
 #[allow(clippy::too_many_lines)]
-pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
+pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     fn iter_folder(sources: &mut Vec<PathBuf>, path: &PathBuf) -> anyhow::Result<()> {
         for entry in std::fs::read_dir(path)? {
             let entry = entry?;
@@ -73,6 +73,10 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     let target_sources = get_target_sources_file(&root);
     let target_classes = get_target_classes_folder(&root);
 
+    // clean slate
+    std::fs::remove_dir_all(&target_sources)?;
+    std::fs::remove_dir_all(&target_classes)?;
+
     std::fs::create_dir_all(&target_sources)?;
     std::fs::create_dir_all(&target_classes)?;
 
@@ -82,7 +86,6 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                 .canonicalize()?
                 .display()
                 .to_string()
-                .trim_start_matches(&root.join("src").canonicalize()?.display().to_string())
                 .trim_start_matches(&root.join("src").canonicalize()?.display().to_string())
                 .trim_start_matches('/')
                 .trim_start_matches('\\'),
@@ -95,10 +98,14 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     }
 
     sources = vec![];
-    iter_folder(&mut sources, &target_sources)?;
+    iter_folder(&mut sources, &target_sources.join("main"))?;
+
+    let mut client_sources = sources.clone();
+    iter_folder(&mut client_sources, &target_sources.join("client"))?;
 
     // TODO: compare the current javac and the javac from JAVA_HOME
     let command_args = vec![
+        "-Xlint:all".to_owned(),
         "-d".to_owned(),
         target_classes.canonicalize()?.display().to_string(),
         "-cp".to_owned(),
@@ -111,9 +118,10 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     let mut threads = vec![];
     let mut progress = Progress::new();
 
-    let (mut stdout_read, mut stdout_write) = std::io::pipe()?;
+    let (mut shared_read, mut shared_write) = std::io::pipe()?;
+    let (mut client_read, mut client_write) = std::io::pipe()?;
 
-    for tasks in split_jobs(sources, args.jobs) {
+    for (i, tasks) in [sources, client_sources].iter().enumerate() {
         threads.push((
             Command::new("javac")
                 .args(
@@ -124,29 +132,19 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                 )
                 .args(command_args.clone())
                 .current_dir(&target_sources)
-                .stdout(stdout_write.try_clone()?)
-                .stderr(stdout_write.try_clone()?)
+                .stdout(if i == 0 {
+                    shared_write.try_clone()?
+                } else {
+                    client_write.try_clone()?
+                })
+                .stderr(if i == 0 {
+                    shared_write.try_clone()?
+                } else {
+                    client_write.try_clone()?
+                })
                 .spawn()?,
             progress.add_task(
-                tasks
-                    .iter()
-                    .map(|s| {
-                        let filename = s
-                            .file_name()
-                            .ok_or_else(|| anyhow::anyhow!("non UTF-8 filename!"))?
-                            .to_string_lossy();
-
-                        Ok::<String, anyhow::Error>(
-                            filename
-                                .split('.')
-                                .next()
-                                .unwrap_or_else(|| &filename)
-                                .to_string(),
-                        )
-                    })
-                    .collect::<anyhow::Result<Vec<String>>>()?
-                    .join(", ")
-                    .clone(),
+                if i == 0 { "Shared" } else { "Client" },
                 Some(tasks.len() as u64),
                 true,
             ),
@@ -175,22 +173,31 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
         )?;
         let output = progress.render(40);
         print!("\x1b[{thread_count}A");
-        print!("{}", output.to_ansi());
+        print!("{}\x1b[0K", output.to_ansi());
         let _ = std::io::stdout().flush();
     }
 
-    stdout_write.flush()?;
-    drop(stdout_write);
+    shared_write.flush()?;
+    drop(shared_write);
+    client_write.flush()?;
+    drop(client_write);
 
-    let mut log = vec![];
-    stdout_read.read_to_end(&mut log)?;
+    let mut shared_log = vec![];
+    shared_read.read_to_end(&mut shared_log)?;
+    let mut client_log = vec![];
+    client_read.read_to_end(&mut client_log)?;
 
-    println!(
-        "{}",
-        log.iter()
-            .map(|s| (*s as char).to_string())
-            .collect::<String>()
-    );
+    let shared_log = shared_log
+        .iter()
+        .map(|s| (*s as char).to_string())
+        .collect::<String>();
+    let client_log = client_log
+        .iter()
+        .map(|s| (*s as char).to_string())
+        .collect::<String>();
+
+    print!("{shared_log}");
+    print!("{client_log}");
 
     anyhow::ensure!(ok, "failed to compile java code");
 
