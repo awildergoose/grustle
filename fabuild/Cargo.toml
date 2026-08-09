@@ -10,6 +10,7 @@ bhc-diagnostics = "0.2.20"
 bhc-span = "0.2.20"
 crc32fast = "1.5.0"
 lenient_semver = "0.4.2"
+regex = "1.13.1"
 richrs = "0.2.1"
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.2"

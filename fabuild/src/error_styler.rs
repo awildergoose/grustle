@@ -1,7 +1,8 @@
-use std::{collections::HashMap, io::Write, path::PathBuf};
+use std::{collections::HashMap, fmt::Write as _, io::Write, path::PathBuf};
 
 use bhc_diagnostics::{Diagnostic, Severity, SourceMap};
 use bhc_span::{FileId, FullSpan, Span};
+use richrs::color::{Color, StandardColor};
 
 use crate::error_parser::{JavaDiagnostic, JavaDiagnosticKind};
 
@@ -90,7 +91,7 @@ pub fn print_pretty_error<S: ::std::hash::BuildHasher>(
         dgs.push(diag);
     }
 
-    let renderer = PrettyDiagnosticRenderer::new(source_map);
+    let renderer = PrettyDiagnosticRenderer::new(source_map)?;
     renderer.render_all(&dgs);
 
     Ok(())
@@ -99,13 +100,69 @@ pub fn print_pretty_error<S: ::std::hash::BuildHasher>(
 /// Render diagnostics to a writer.
 pub struct PrettyDiagnosticRenderer<'a> {
     source_map: &'a SourceMap,
+    regex: regex::Regex,
 }
 
 impl<'a> PrettyDiagnosticRenderer<'a> {
     /// Create a new renderer.
-    #[must_use]
-    pub const fn new(source_map: &'a SourceMap) -> Self {
-        Self { source_map }
+    pub fn new(source_map: &'a SourceMap) -> anyhow::Result<Self> {
+        Ok(Self {
+            source_map,
+            regex: regex::Regex::new(
+                &r#"
+(?P<COMMENT>//[^\n]*|/\*[\s\S]*?\*/)
+|(?P<STRING>"([^"\\]|\\.)*")
+|(?P<KEYWORD>\b(public|private|protected|class|static|void|int|double|boolean|if|else|for|while|return|new|import|package)\b)
+|(?P<NUMBER>\b\d+(\.\d+)?\b)
+|(?P<TYPE>\b(ArrayList|List|Map|Set|HashMap|HashSet|LinkedList|Queue|Deque|Stack|Vector|Iterable|Iterator|Collections|Optional)\b)
+|(?P<IDENTIFIER>\b[a-zA-Z_][a-zA-Z0-9_]*\b)
+"#.replace('\n', ""),
+            )?,
+        })
+    }
+
+    /// Highlights the source code using the regex.
+    fn highlight(&self, source: &str) -> String {
+        let reset = "\x1b[0m";
+        let color_comment = Color::Standard(StandardColor::BrightBlack).to_ansi_fg();
+        let color_string = Color::Standard(StandardColor::BrightGreen).to_ansi_fg();
+        let color_keyword = Color::Standard(StandardColor::Red).to_ansi_fg();
+        let color_number = Color::Standard(StandardColor::BrightYellow).to_ansi_fg();
+        let color_identifier = Color::Standard(StandardColor::White).to_ansi_fg();
+        let color_type = Color::Standard(StandardColor::Cyan).to_ansi_fg();
+
+        let mut out = String::new();
+        let mut last = 0;
+
+        for cap in self.regex.captures_iter(source) {
+            let m0 = cap
+                .get(0)
+                .expect("regex should always match full alternative");
+
+            out.push_str(&source[last..m0.start()]);
+
+            let m = m0.as_str();
+            if cap.name("COMMENT").is_some() {
+                let _ = write!(&mut out, "{color_comment}{m}{reset}");
+            } else if cap.name("STRING").is_some() {
+                let _ = write!(&mut out, "{color_string}{m}{reset}");
+            } else if cap.name("KEYWORD").is_some() {
+                let _ = write!(&mut out, "{color_keyword}{m}{reset}");
+            } else if cap.name("NUMBER").is_some() {
+                let _ = write!(&mut out, "{color_number}{m}{reset}");
+            } else if cap.name("TYPE").is_some() {
+                let _ = write!(&mut out, "{color_type}{m}{reset}");
+            } else if cap.name("IDENTIFIER").is_some() {
+                let _ = write!(&mut out, "{color_identifier}{m}{reset}");
+            } else {
+                out.push_str(m);
+            }
+
+            last = m0.end();
+        }
+
+        out.push_str(&source[last..]);
+        out
     }
 
     /// Render a diagnostic to the given writer.
@@ -136,7 +193,7 @@ impl<'a> PrettyDiagnosticRenderer<'a> {
 
                 // Show source line
                 if !label.span.span.is_dummy() {
-                    let source = file.source_text(label.span.span);
+                    let source = self.highlight(file.source_text(label.span.span));
                     writeln!(w, "   {}|{reset}", Severity::Note.color())?;
                     writeln!(w, "   {}|{reset} {source}", Severity::Note.color())?;
                     writeln!(

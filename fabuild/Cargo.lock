@@ -292,6 +292,7 @@ dependencies = [
  "bhc-span",
  "crc32fast",
  "lenient_semver",
+ "regex",
  "richrs",
  "serde",
  "toml",
