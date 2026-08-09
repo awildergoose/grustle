@@ -107,7 +107,7 @@ pub fn parse(input: &str) -> anyhow::Result<Vec<JavaDiagnostic>> {
                 stage = JavaDiagnosticParserStage::Hints;
             }
             JavaDiagnosticParserStage::Hints => {
-                diagnostic.hints.push(line.trim().to_string());
+                diagnostic.hints.push(line.to_string());
             }
             JavaDiagnosticParserStage::EndOfFile => {}
         }

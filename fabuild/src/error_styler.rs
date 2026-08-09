@@ -60,10 +60,12 @@ pub fn print_pretty_error<S: ::std::hash::BuildHasher>(
         let file = source_map.get_file(file_id).ok_or_else(|| {
             anyhow::anyhow!("file {} is not in source map?", diagnostic.file.display())
         })?;
-        let line_start =
-            line_col_to_byte_index(&file.src, diagnostic.line_number, diagnostic.column)
-                .ok_or_else(|| anyhow::anyhow!("parser lead to non-existing line number?"))?;
-        let start = line_start;
+        let line_start = line_col_to_byte_index(&file.src, diagnostic.line_number, 1)
+            .ok_or_else(|| anyhow::anyhow!("parser lead to non-existing line number?"))?;
+        let start = line_start
+            + file.src[line_start..]
+                .find(|c: char| !c.is_whitespace())
+                .ok_or_else(|| anyhow::anyhow!("parser lead to whitespace?"))?;
         let end = start
             + file.src[start..]
                 .find('\n')
@@ -97,34 +99,19 @@ pub fn print_pretty_error<S: ::std::hash::BuildHasher>(
 /// Render diagnostics to a writer.
 pub struct PrettyDiagnosticRenderer<'a> {
     source_map: &'a SourceMap,
-    use_colors: bool,
 }
 
 impl<'a> PrettyDiagnosticRenderer<'a> {
     /// Create a new renderer.
     #[must_use]
     pub const fn new(source_map: &'a SourceMap) -> Self {
-        Self {
-            source_map,
-            use_colors: true,
-        }
-    }
-
-    /// Disable colors.
-    #[must_use]
-    pub const fn without_colors(mut self) -> Self {
-        self.use_colors = false;
-        self
+        Self { source_map }
     }
 
     /// Render a diagnostic to the given writer.
     pub fn render(&self, diagnostic: &Diagnostic, w: &mut impl Write) -> std::io::Result<()> {
-        let reset = if self.use_colors { "\x1b[0m" } else { "" };
-        let color = if self.use_colors {
-            diagnostic.severity.color()
-        } else {
-            ""
-        };
+        let reset = "\x1b[0m";
+        let color = diagnostic.severity.color();
 
         // Header
         write!(w, "{}{}", color, diagnostic.severity.label())?;
@@ -156,7 +143,7 @@ impl<'a> PrettyDiagnosticRenderer<'a> {
                         w,
                         "   {}|{reset} {}{}{reset}",
                         Severity::Note.color(),
-                        diagnostic.severity.color(),
+                        color,
                         "^".repeat(source.len().max(1))
                     )?;
                     if !label.message.is_empty() {
@@ -168,7 +155,7 @@ impl<'a> PrettyDiagnosticRenderer<'a> {
 
         // Notes
         for note in &diagnostic.notes {
-            writeln!(w, " = {}note{reset}: {note}", Severity::Note.color())?;
+            writeln!(w, " {}= note{reset}: {note}", Severity::Note.color())?;
         }
 
         // Suggestions
