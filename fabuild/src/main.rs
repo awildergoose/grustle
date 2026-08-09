@@ -1,6 +1,7 @@
 #![allow(clippy::missing_errors_doc)]
 
 pub mod error_parser;
+pub mod error_styler;
 pub mod jregistry;
 pub mod preprocessing;
 pub mod project;

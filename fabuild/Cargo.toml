@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.104"
 arg = { version = "0.4.5", features = ["std"] }
+bhc-diagnostics = "0.2.20"
+bhc-span = "0.2.20"
 crc32fast = "1.5.0"
 lenient_semver = "0.4.2"
 richrs = "0.2.1"

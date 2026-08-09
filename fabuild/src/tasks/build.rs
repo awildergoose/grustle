@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::{Read, Write},
     path::PathBuf,
@@ -6,10 +7,13 @@ use std::{
 };
 
 use anyhow::Context;
+use bhc_diagnostics::SourceMap;
 use richrs::prelude::*;
 
 use crate::{
     ProgramBuildSubCommand,
+    error_parser::{self, JavaDiagnostic},
+    error_styler::print_pretty_error,
     jregistry::load_default_jregistry,
     preprocessing::sources::preprocess_source_file,
     project::{load_project_tree, load_root_project},
@@ -115,14 +119,33 @@ pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
         ),
     ];
 
-    let mut threads = vec![];
+    let mut processes = vec![];
     let mut progress = Progress::new();
 
     let (mut shared_read, mut shared_write) = std::io::pipe()?;
     let (mut client_read, mut client_write) = std::io::pipe()?;
 
+    let mut source_map = SourceMap::new();
+    let mut file_ids = HashMap::new();
+
+    for file in &client_sources {
+        file_ids.insert(
+            file.canonicalize()?,
+            source_map.add_file(
+                file.file_name()
+                    .ok_or_else(|| anyhow::anyhow!("no filename for \"{}\"?", file.display()))?
+                    .to_string_lossy()
+                    .to_string(),
+                std::fs::read_to_string(file).context(format!(
+                    "failed to read post-processed file: {}",
+                    file.display()
+                ))?,
+            ),
+        );
+    }
+
     for (i, tasks) in [sources, client_sources].iter().enumerate() {
-        threads.push((
+        processes.push((
             Command::new("javac")
                 .args(
                     tasks
@@ -155,10 +178,10 @@ pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     print!("{}", output.to_ansi());
     let _ = std::io::stdout().flush();
 
-    let thread_count = threads.len();
+    let thread_count = processes.len();
     let mut ok = true;
 
-    for (thread, task) in &mut threads {
+    for (thread, task) in &mut processes {
         if !thread.wait()?.success() {
             ok = false;
         }
@@ -196,8 +219,15 @@ pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
         .map(|s| (*s as char).to_string())
         .collect::<String>();
 
-    print!("{shared_log}");
-    print!("{client_log}");
+    let shared_parsed = error_parser::parse(&shared_log)?;
+    let client_parsed = error_parser::parse(&client_log)?
+        .iter()
+        .filter(|s| !shared_parsed.contains(*s))
+        .cloned()
+        .collect::<Vec<JavaDiagnostic>>();
+
+    print_pretty_error(&source_map, &file_ids, &shared_parsed)?;
+    print_pretty_error(&source_map, &file_ids, &client_parsed)?;
 
     anyhow::ensure!(ok, "failed to compile java code");
 
@@ -257,7 +287,7 @@ pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     iter_folder(&mut resources, &root.join("src/main/resources"))?;
     iter_folder(&mut resources, &root.join("src/client/resources"))?;
 
-    for (_, task) in threads {
+    for (_, task) in processes {
         progress.remove_task(task);
     }
 

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 #[derive(PartialEq, Eq, Clone, Debug, Default)]
 pub enum JavaDiagnosticKind {
     #[default]
@@ -8,7 +10,7 @@ pub enum JavaDiagnosticKind {
 #[derive(PartialEq, Eq, Clone, Debug, Default)]
 pub struct JavaDiagnostic {
     pub kind: JavaDiagnosticKind,
-    pub file: String,
+    pub file: PathBuf,
     pub line_number: usize,
     pub line_text: String,
     pub column: usize,
@@ -31,15 +33,7 @@ pub fn parse(input: &str) -> anyhow::Result<Vec<JavaDiagnostic>> {
 
     let mut out = vec![];
 
-    let mut diagnostic = JavaDiagnostic {
-        kind: JavaDiagnosticKind::Error,
-        file: String::new(),
-        line_number: 0,
-        line_text: String::new(),
-        column: 0,
-        message: String::new(),
-        hints: vec![],
-    };
+    let mut diagnostic = JavaDiagnostic::default();
     let mut stage = JavaDiagnosticParserStage::Gathering;
 
     for line in input.lines() {
@@ -98,7 +92,7 @@ pub fn parse(input: &str) -> anyhow::Result<Vec<JavaDiagnostic>> {
                 let message = &line[(start + error_text.len())..];
 
                 diagnostic.kind = kind;
-                diagnostic.file = filename;
+                diagnostic.file = PathBuf::from(filename).canonicalize()?;
                 diagnostic.line_number = line_number.parse()?;
                 diagnostic.message = message.to_string();
 
@@ -137,7 +131,7 @@ mod test {
     ) -> JavaDiagnostic {
         JavaDiagnostic {
             kind,
-            file: file.to_string(),
+            file: file.into(),
             line_text: line_text.to_string(),
             message: message.to_string(),
             line_number,
