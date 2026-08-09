@@ -71,8 +71,10 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
 
     // preprocess the sources first
     let target_sources = get_target_sources_file(&root);
+    let target_classes = get_target_classes_folder(&root);
 
     std::fs::create_dir_all(&target_sources)?;
+    std::fs::create_dir_all(&target_classes)?;
 
     for file in &sources {
         let target = target_sources.join(PathBuf::from(
@@ -80,24 +82,8 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                 .canonicalize()?
                 .display()
                 .to_string()
-                .trim_start_matches(
-                    &root
-                        .join("src")
-                        .join("main")
-                        .join("java")
-                        .canonicalize()?
-                        .display()
-                        .to_string(),
-                )
-                .trim_start_matches(
-                    &root
-                        .join("src")
-                        .join("client")
-                        .join("java")
-                        .canonicalize()?
-                        .display()
-                        .to_string(),
-                )
+                .trim_start_matches(&root.join("src").canonicalize()?.display().to_string())
+                .trim_start_matches(&root.join("src").canonicalize()?.display().to_string())
                 .trim_start_matches('/')
                 .trim_start_matches('\\'),
         ));
@@ -114,20 +100,32 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     // TODO: compare the current javac and the javac from JAVA_HOME
     let command_args = vec![
         "-d".to_owned(),
-        get_target_classes_folder(&root).display().to_string(),
+        target_classes.canonicalize()?.display().to_string(),
         "-cp".to_owned(),
-        format!("@{}", get_target_classpath_file(&root).display()),
+        format!(
+            "@{}",
+            get_target_classpath_file(&root).canonicalize()?.display()
+        ),
     ];
 
     let mut threads = vec![];
     let mut progress = Progress::new();
 
+    let (mut stdout_read, mut stdout_write) = std::io::pipe()?;
+
     for tasks in split_jobs(sources, args.jobs) {
         threads.push((
             Command::new("javac")
-                .args(tasks.clone())
+                .args(
+                    tasks
+                        .iter()
+                        .map(|t| Ok(t.canonicalize()?))
+                        .collect::<anyhow::Result<Vec<PathBuf>>>()?,
+                )
                 .args(command_args.clone())
-                .current_dir(&root)
+                .current_dir(&target_sources)
+                .stdout(stdout_write.try_clone()?)
+                .stderr(stdout_write.try_clone()?)
                 .spawn()?,
             progress.add_task(
                 tasks
@@ -181,6 +179,19 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
         let _ = std::io::stdout().flush();
     }
 
+    stdout_write.flush()?;
+    drop(stdout_write);
+
+    let mut log = vec![];
+    stdout_read.read_to_end(&mut log)?;
+
+    println!(
+        "{}",
+        log.iter()
+            .map(|s| (*s as char).to_string())
+            .collect::<String>()
+    );
+
     anyhow::ensure!(ok, "failed to compile java code");
 
     // copy embedded jars' contents into there aswell!
@@ -212,9 +223,7 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                         continue;
                     }
 
-                    let filepath = get_target_classes_folder(&root)
-                        .join(&dep.location)
-                        .join(&filename);
+                    let filepath = target_classes.join(&dep.location).join(&filename);
                     let mut folder = filepath.clone();
 
                     if file.is_file() {
@@ -251,7 +260,7 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
 
     for resource in &resources {
         let from = resource;
-        let to = get_target_classes_folder(&root).join(
+        let to = target_classes.join(
             resource
                 .canonicalize()?
                 .display()

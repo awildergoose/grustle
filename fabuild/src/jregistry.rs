@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use anyhow::Context;
+
 use crate::util::get_target_aw_folder;
 
 /// The `JRegistry` contains references to the jar files.
@@ -40,7 +42,10 @@ impl FabuildJRegistry {
     ) -> anyhow::Result<PathBuf> {
         // sorry
         if name == "minecraft" || name == "minecraft-client" {
-            return Ok(get_target_aw_folder(project_root).join(format!("{name}.jar")));
+            return get_target_aw_folder(project_root)
+                .join(format!("{name}.jar"))
+                .canonicalize()
+                .context(format!("canonicalizing {name}.jar"));
         }
 
         Ok(self.resolve_path(name, version)?.join(filename))

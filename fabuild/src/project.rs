@@ -187,7 +187,10 @@ impl FabuildProjectTree {
             out.push(ClasspathEntry {
                 classes: vec![format!(
                     "{}",
-                    get_target_classes_folder(root).canonicalize()?.display()
+                    get_target_classes_folder(root)
+                        .canonicalize()
+                        .context("classes folder hasn't been created yet")?
+                        .display()
                 )],
                 sources: vec![],
             });

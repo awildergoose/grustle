@@ -169,6 +169,7 @@ pub fn generate_classpath(
     jregistry: &FabuildJRegistry,
     tree: &FabuildProjectTree,
 ) -> anyhow::Result<()> {
+    std::fs::create_dir_all(get_target_classes_folder(root))?;
     let entries = tree.gather_classpath(
         root,
         jregistry,

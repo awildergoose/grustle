@@ -17,6 +17,7 @@ pub struct ProgramEmptySubCommand {}
 
 #[derive(Args, Debug)]
 pub struct ProgramBuildSubCommand {
+    // TODO: remove this
     #[arg(short, long, default_value = "2")]
     pub jobs: usize,
 }
