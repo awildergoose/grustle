@@ -18,13 +18,21 @@ use crate::util::SystemArchitecture;
 
 #[derive(Args, Debug)]
 pub struct ProgramEmptySubCommand {
-    #[arg(default_value = "PathBuf::from(\"../example\")")]
+    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
     pub root: PathBuf,
 }
 
 #[derive(Args, Debug)]
+pub struct ProgramSourcesSubCommand {
+    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
+    pub root: PathBuf,
+    #[arg(long, default_value = "4")]
+    pub threads: u32,
+}
+
+#[derive(Args, Debug)]
 pub struct ProgramClasspathArgs {
-    #[arg(default_value = "PathBuf::from(\"../example\")")]
+    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
     pub root: PathBuf,
     #[arg(short, long, default_value = "false")]
     pub sources: bool,
@@ -41,7 +49,7 @@ enum ProgramSubCommand {
     Classpath(ProgramClasspathArgs),
     Aw(ProgramEmptySubCommand),
     Intellij(ProgramEmptySubCommand),
-    Sources(ProgramEmptySubCommand),
+    Sources(ProgramSourcesSubCommand),
 }
 
 #[derive(Args, Debug)]
@@ -52,8 +60,13 @@ struct ProgramArgs {
 
 fn main() -> anyhow::Result<()> {
     // TODO: improve this
-    let args = ProgramArgs::from_text(&std::env::args().skip(1).collect::<Vec<String>>().join(" "))
-        .map_err(|_| anyhow::anyhow!("failed to parse command"))?;
+    let binding = std::env::args().skip(1).collect::<Vec<String>>();
+    let args = binding
+        .iter()
+        .map(std::string::String::as_str)
+        .collect::<Vec<&str>>();
+    let args = ProgramArgs::from_args(args)
+        .map_err(|e| anyhow::anyhow!("failed to parse command: {e:?}"))?;
 
     match args.cmd {
         ProgramSubCommand::Init(args) => tasks::init::run(&args),

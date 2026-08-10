@@ -1,13 +1,15 @@
 use std::process::{Command, Stdio};
 
+use anyhow::Context;
+
 use crate::{
-    ProgramEmptySubCommand,
+    ProgramSourcesSubCommand,
     jregistry::load_default_jregistry,
     project::load_root_project,
     util::{get_target_aw_folder, get_target_vineflower_file},
 };
 
-pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
+pub fn run(args: &ProgramSourcesSubCommand) -> anyhow::Result<()> {
     let root = &args.root;
 
     let project = load_root_project(root)?;
@@ -29,15 +31,20 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let target_game = get_target_aw_folder(root);
     std::fs::create_dir_all(&target_game)?;
 
-    std::fs::write(
-        get_target_vineflower_file(root),
-        include_bytes!("../../tools/vineflower.jar"),
-    )?;
+    let vineflower = &get_target_vineflower_file(root);
+    std::fs::write(vineflower, include_bytes!("../../tools/vineflower.jar"))?;
+
+    let vineflower = &vineflower.canonicalize().context(format!(
+        "failed to canonicalize file path for vineflower.jar: {}",
+        vineflower.display()
+    ))?;
 
     anyhow::ensure!(
         Command::new("java")
             .arg("-jar")
-            .arg(get_target_vineflower_file(root))
+            .arg(vineflower)
+            .arg("--thread-count")
+            .arg(args.threads.to_string())
             .arg(jregistry.resolve_file(root, "minecraft", game_version, "minecraft.jar")?) // input file
             .arg(target_game.join("minecraft-sources.jar")) // output file
             .stdout(Stdio::null())
@@ -50,7 +57,9 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     anyhow::ensure!(
         Command::new("java")
             .arg("-jar")
-            .arg(get_target_vineflower_file(root))
+            .arg(vineflower)
+            .arg("--thread-count")
+            .arg(args.threads.to_string())
             .arg(jregistry.resolve_file(
                 root,
                 "minecraft-client",
