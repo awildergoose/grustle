@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process::Command};
+use std::process::Command;
 
 use crate::{
     ProgramEmptySubCommand,
@@ -11,26 +11,26 @@ use crate::{
     },
 };
 
-pub fn run(_: &ProgramEmptySubCommand) -> anyhow::Result<()> {
-    let root = PathBuf::from("../example");
+pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
+    let root = &args.root;
 
-    let project = load_root_project(&root)?;
+    let project = load_root_project(root)?;
     let registry = load_default_registry();
     let jregistry = load_default_jregistry();
-    let tree = load_project_tree(&root, &project, &registry)?;
+    let tree = load_project_tree(root, &project, &registry)?;
 
-    let run_folder = get_run_folder(&root);
-    let classpath_file = get_target_classpath_file(&root);
-    let classes_folder = get_target_classes_folder(&root);
-    let launch_folder = get_target_launch_folder(&root);
+    let run_folder = get_run_folder(root);
+    let classpath_file = get_target_classpath_file(root);
+    let classes_folder = get_target_classes_folder(root);
+    let launch_folder = get_target_launch_folder(root);
 
     std::fs::create_dir_all(&run_folder)?;
     std::fs::create_dir_all(&classes_folder)?;
     std::fs::create_dir_all(&launch_folder)?;
 
-    generate_classpath(&root, &jregistry, &tree)?;
-    generate_log4j_config(&root)?;
-    generate_launch_config(&root, &jregistry, &project)?;
+    generate_classpath(root, &jregistry, &tree)?;
+    generate_log4j_config(root)?;
+    generate_launch_config(root, &jregistry, &project)?;
 
     anyhow::ensure!(
         Command::new("java")

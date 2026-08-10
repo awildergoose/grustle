@@ -10,18 +10,22 @@ pub mod tasks;
 pub mod tweaker;
 pub mod util;
 
+use std::path::PathBuf;
+
 use arg::Args;
 
 use crate::util::SystemArchitecture;
 
 #[derive(Args, Debug)]
-pub struct ProgramEmptySubCommand {}
-
-#[derive(Args, Debug)]
-pub struct ProgramBuildSubCommand {}
+pub struct ProgramEmptySubCommand {
+    #[arg(default_value = "PathBuf::from(\"../example\")")]
+    pub root: PathBuf,
+}
 
 #[derive(Args, Debug)]
 pub struct ProgramClasspathArgs {
+    #[arg(default_value = "PathBuf::from(\"../example\")")]
+    pub root: PathBuf,
     #[arg(short, long, default_value = "false")]
     pub sources: bool,
     #[arg(long, default_value = "SystemArchitecture::Auto")]
@@ -31,7 +35,7 @@ pub struct ProgramClasspathArgs {
 #[derive(Args, Debug)]
 enum ProgramSubCommand {
     Init(ProgramEmptySubCommand),
-    Build(ProgramBuildSubCommand),
+    Build(ProgramEmptySubCommand),
     Run(ProgramEmptySubCommand),
     Jar(ProgramEmptySubCommand),
     Classpath(ProgramClasspathArgs),

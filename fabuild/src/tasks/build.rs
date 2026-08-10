@@ -11,7 +11,7 @@ use bhc_diagnostics::SourceMap;
 use richrs::prelude::*;
 
 use crate::{
-    ProgramBuildSubCommand,
+    ProgramEmptySubCommand,
     error_parser::{self, JavaDiagnostic},
     error_styler::print_pretty_error,
     jregistry::load_default_jregistry,
@@ -26,7 +26,7 @@ use crate::{
 };
 
 #[allow(clippy::too_many_lines)]
-pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
+pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     fn iter_folder(sources: &mut Vec<PathBuf>, path: &PathBuf) -> anyhow::Result<()> {
         for entry in std::fs::read_dir(path)? {
             let entry = entry?;
@@ -44,17 +44,17 @@ pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
         Ok(())
     }
 
-    let root = PathBuf::from("../example");
+    let root = &args.root;
 
-    let project = load_root_project(&root)?;
+    let project = load_root_project(root)?;
     let registry = load_default_registry();
     let jregistry = load_default_jregistry();
-    let tree = load_project_tree(&root, &project, &registry)?;
-    generate_classpath(&root, &jregistry, &tree)?;
+    let tree = load_project_tree(root, &project, &registry)?;
+    generate_classpath(root, &jregistry, &tree)?;
 
     // if the classtweakers changed, reinvoke quick-tweak
-    for (new_path, new_filename) in get_class_tweakers(&root)? {
-        let old_path = get_target_classtweakers_folder(&root).join(new_filename);
+    for (new_path, new_filename) in get_class_tweakers(root)? {
+        let old_path = get_target_classtweakers_folder(root).join(new_filename);
 
         if std::fs::exists(&old_path)? {
             if !std::fs::read(&old_path)
@@ -62,10 +62,10 @@ pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                 .eq(&std::fs::read(&new_path)
                     .context(format!("reading from {}", new_path.display()))?)
             {
-                invoke_class_tweakers(&root, &project, &jregistry)?;
+                invoke_class_tweakers(root, &project, &jregistry)?;
             }
         } else {
-            invoke_class_tweakers(&root, &project, &jregistry)?;
+            invoke_class_tweakers(root, &project, &jregistry)?;
         }
     }
 
@@ -74,8 +74,8 @@ pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     iter_folder(&mut sources, &root.join("src/client/java"))?;
 
     // preprocess the sources first
-    let target_sources = get_target_sources_file(&root);
-    let target_classes = get_target_classes_folder(&root);
+    let target_sources = get_target_sources_file(root);
+    let target_classes = get_target_classes_folder(root);
 
     // clean slate
     std::fs::remove_dir_all(&target_sources)?;
@@ -115,7 +115,7 @@ pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
         "-cp".to_owned(),
         format!(
             "@{}",
-            get_target_classpath_file(&root).canonicalize()?.display()
+            get_target_classpath_file(root).canonicalize()?.display()
         ),
     ];
 
@@ -243,7 +243,7 @@ pub fn run(_: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                 })?;
 
             for jar in &pkg.version.runtime {
-                let path = jregistry.resolve_file(&root, &name, &dep.version, jar)?;
+                let path = jregistry.resolve_file(root, &name, &dep.version, jar)?;
                 let mut zip = zip::read::ZipArchive::new(
                     File::open(&path).context(format!("opening jar at {}", path.display()))?,
                 )

@@ -1,5 +1,4 @@
 use std::fmt::Write;
-use std::path::PathBuf;
 
 use crate::{
     ProgramEmptySubCommand,
@@ -9,8 +8,8 @@ use crate::{
     util::SystemArchitecture,
 };
 
-pub fn run(_: &ProgramEmptySubCommand) -> anyhow::Result<()> {
-    let root = PathBuf::from("../example");
+pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
+    let root = &args.root;
     let mut out = r#"<?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
     <component name="NewModuleRootManager" inherit-compiler-output="true">
@@ -26,13 +25,13 @@ pub fn run(_: &ProgramEmptySubCommand) -> anyhow::Result<()> {
         "#
     .to_string();
 
-    let project = load_root_project(&root)?;
+    let project = load_root_project(root)?;
     let registry = load_default_registry();
     let jregistry = load_default_jregistry();
-    let tree = load_project_tree(&root, &project, &registry)?;
+    let tree = load_project_tree(root, &project, &registry)?;
 
     let entries = tree.gather_classpath(
-        &root,
+        root,
         &jregistry,
         SystemArchitecture::Auto.resolve(),
         false,

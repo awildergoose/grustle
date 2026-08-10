@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use crate::{
     ProgramClasspathArgs,
     jregistry::load_default_jregistry,
@@ -8,13 +6,13 @@ use crate::{
 };
 
 pub fn run(args: &ProgramClasspathArgs) -> anyhow::Result<()> {
-    let root = PathBuf::from("../example");
+    let root = &args.root;
 
-    let project = load_root_project(&root)?;
+    let project = load_root_project(root)?;
     let registry = load_default_registry();
     let jregistry = load_default_jregistry();
-    let tree = load_project_tree(&root, &project, &registry)?;
-    let entries = tree.gather_classpath(&root, &jregistry, args.arch.resolve(), true, true)?;
+    let tree = load_project_tree(root, &project, &registry)?;
+    let entries = tree.gather_classpath(root, &jregistry, args.arch.resolve(), true, true)?;
 
     let mut out = Vec::new();
 
