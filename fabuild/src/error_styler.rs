@@ -193,7 +193,8 @@ impl<'a> PrettyDiagnosticRenderer<'a> {
 
                 // Show source line
                 if !label.span.span.is_dummy() {
-                    let source = self.highlight(file.source_text(label.span.span));
+                    let raw_source = file.source_text(label.span.span);
+                    let source = self.highlight(raw_source);
                     writeln!(w, "   {}|{reset}", Severity::Note.color())?;
                     writeln!(w, "   {}|{reset} {source}", Severity::Note.color())?;
                     writeln!(
@@ -201,7 +202,7 @@ impl<'a> PrettyDiagnosticRenderer<'a> {
                         "   {}|{reset} {}{}{reset}",
                         Severity::Note.color(),
                         color,
-                        "^".repeat(source.len().max(1))
+                        "^".repeat(raw_source.len().max(1))
                     )?;
                     if !label.message.is_empty() {
                         writeln!(w, "   | {}", label.message)?;
