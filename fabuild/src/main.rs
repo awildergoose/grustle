@@ -79,7 +79,7 @@ fn main() -> anyhow::Result<()> {
     let args = ProgramArgs::from_args(args)
         .map_err(|e| anyhow::anyhow!("failed to parse command: {e:?}"))?;
 
-    match args.cmd {
+    let result = match args.cmd {
         ProgramSubCommand::Init(args) => tasks::init::run(&args),
         ProgramSubCommand::Build(args) => tasks::build::run(&args),
         ProgramSubCommand::Run(args) => tasks::run::run(&args),
@@ -88,5 +88,25 @@ fn main() -> anyhow::Result<()> {
         ProgramSubCommand::Aw(args) => tasks::aw::run(&args),
         ProgramSubCommand::Intellij(args) => tasks::intellij::run(&args),
         ProgramSubCommand::Sources(args) => tasks::sources::run(&args),
+    };
+
+    if let Err(ref e) = result {
+        let mut con = richrs::console::Console::new();
+
+        con.print(&format!("[red]error[white]: {e}"))?;
+
+        if cfg!(debug_assertions) {
+            let backtrace_status = e.backtrace().status();
+
+            if backtrace_status.eq(&std::backtrace::BacktraceStatus::Captured) {
+                println!("{}", e.backtrace());
+            } else if backtrace_status.eq(&std::backtrace::BacktraceStatus::Disabled) {
+                con.print(
+                    "[cyan]help[white]: set [green]RUST_BACKTRACE=1[white] to see the backtrace",
+                )?;
+            }
+        }
     }
+
+    Ok(())
 }
