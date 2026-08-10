@@ -1,7 +1,10 @@
 [package]
-name = "example"
+name = "template-mod"
 path = "com.example"
 ver = "1.0.0"
+
+[extra]
+display_name = "Template Mod"
 
 [dependencies]
 fabric = "0.19.3"

@@ -68,6 +68,8 @@ pub struct FabuildSeProject {
     pub package: FabuildPackage,
     pub dependencies: HashMap<String, FabuildSeDependency>,
     pub version: FabuildPackageVersion,
+    #[serde(default)]
+    pub extra: HashMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -75,6 +77,8 @@ pub struct FabuildProject {
     pub package: FabuildPackage,
     pub dependencies: HashMap<String, FabuildDependency>,
     pub version: FabuildPackageVersion,
+    #[serde(default)]
+    pub extra: HashMap<String, String>,
 }
 
 impl FabuildProject {
@@ -212,6 +216,7 @@ pub fn parse_project(text: &str) -> anyhow::Result<FabuildProject> {
             .iter()
             .map(|d| (d.0.clone(), d.1.resolve()))
             .collect::<_>(),
+        extra: parsed.extra,
     };
 
     Ok(project)

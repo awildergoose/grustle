@@ -8,7 +8,8 @@
 - [x] compile shared-only and then client-and-shared
 - [x] generate sources command
 - [x] run server support
-- [ ] resource preprocessor (json ${defines})
+- [x] resource preprocessor (json ${defines})
+- [ ] fix lock hash
 - [ ] vineflower caching
 - [ ] improve the registry system by specifying download locations
 - [ ] allow fabuild to download dependencies

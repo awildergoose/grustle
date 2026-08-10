@@ -15,7 +15,7 @@ use crate::{
     error_parser::{self, JavaDiagnostic},
     error_styler::print_pretty_error,
     jregistry::load_default_jregistry,
-    preprocessing::sources::preprocess_source_file,
+    preprocessing::{resources::preprocess_resource_file, sources::preprocess_source_file},
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
     tweaker::{get_class_tweakers, invoke_class_tweakers},
@@ -101,8 +101,8 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
         })?)?;
 
         let output = preprocess_source_file(&tree, file)?;
-        std::fs::write(target, output.clone())?;
-        processed_sources.insert(file.clone(), output);
+        std::fs::write(&target, output.clone())?;
+        processed_sources.insert(target, output);
     }
 
     sources = vec![];
@@ -289,23 +289,32 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     }
 
     // copy resources for now, later on, we can pre-process them!
-    let mut resources = vec![];
-    iter_folder(&mut resources, &root.join("src/main/resources"))?;
-    iter_folder(&mut resources, &root.join("src/client/resources"))?;
+    let mut raw_resources = vec![];
+    iter_folder(&mut raw_resources, &root.join("src/main/resources"))?;
+    iter_folder(&mut raw_resources, &root.join("src/client/resources"))?;
 
     for (_, task) in processes {
         progress.remove_task(task);
     }
 
-    let task = progress.add_task("Copying resources...", Some(resources.len() as u64), true);
+    let mut resources = HashMap::new();
+
+    for resource in &raw_resources {
+        let out = preprocess_resource_file(&tree, resource)?;
+        resources.insert(resource.clone(), out);
+    }
+
+    let task = progress.add_task(
+        "Processing resources...",
+        Some(raw_resources.len() as u64),
+        true,
+    );
 
     println!();
 
-    for resource in &resources {
-        let from = resource;
+    for (path, content) in &resources {
         let to = target_classes.join(
-            resource
-                .canonicalize()?
+            path.canonicalize()?
                 .display()
                 .to_string()
                 .trim_start_matches(
@@ -334,11 +343,7 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
                 anyhow::anyhow!("failed to find parent folder of {}", to.display())
             })?,
         )?;
-        std::fs::copy(from, &to).context(format!(
-            "copying resource from {} to {}",
-            from.display(),
-            to.display()
-        ))?;
+        std::fs::write(to, content)?;
 
         progress.advance(task, 1)?;
         let output = progress.render(40);
