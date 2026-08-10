@@ -7,6 +7,7 @@ pub mod preprocessing;
 pub mod project;
 pub mod registry;
 pub mod tasks;
+pub mod template;
 pub mod tweaker;
 pub mod util;
 
@@ -20,6 +21,28 @@ use crate::util::SystemArchitecture;
 pub struct ProgramEmptySubCommand {
     #[arg(long, default_value = "PathBuf::from(\"../example\")")]
     pub root: PathBuf,
+}
+
+#[derive(Args, Debug)]
+pub struct ProgramNewSubCommand {
+    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
+    pub root: PathBuf,
+
+    #[arg(short, long, required)]
+    pub namespace: String,
+    #[arg(short, long, required)]
+    pub identifier: String,
+    #[arg(short, long, required)]
+    pub classname: String,
+    #[arg(short, long, required)]
+    pub display_name: String,
+
+    #[arg(short, long, default_value = "\"26.2\".to_string()")]
+    pub minecraft_version: String,
+    #[arg(short, long, default_value = "\"0.19.3\".to_string()")]
+    pub fabric_version: String,
+    #[arg(short, long, default_value = "\"0.155.2\".to_string()")]
+    pub fabric_api_version: String,
 }
 
 #[derive(Args, Debug)]
@@ -37,7 +60,10 @@ pub struct ProgramRunSubCommand {
 pub struct ProgramSourcesSubCommand {
     #[arg(long, default_value = "PathBuf::from(\"../example\")")]
     pub root: PathBuf,
-    #[arg(long, default_value = "4")]
+    #[arg(
+        long,
+        default_value = "std::thread::available_parallelism().map(|n| (n.get() / 2) as u32).unwrap_or(2)"
+    )]
     pub threads: u32,
 }
 
@@ -53,7 +79,7 @@ pub struct ProgramClasspathArgs {
 
 #[derive(Args, Debug)]
 enum ProgramSubCommand {
-    Init(ProgramEmptySubCommand),
+    New(ProgramNewSubCommand),
     Build(ProgramEmptySubCommand),
     Run(ProgramRunSubCommand),
     Jar(ProgramEmptySubCommand),
@@ -69,7 +95,7 @@ struct ProgramArgs {
     cmd: ProgramSubCommand,
 }
 
-fn main() -> anyhow::Result<()> {
+fn fake_main() -> anyhow::Result<()> {
     // TODO: improve this
     let binding = std::env::args().skip(1).collect::<Vec<String>>();
     let args = binding
@@ -79,8 +105,8 @@ fn main() -> anyhow::Result<()> {
     let args = ProgramArgs::from_args(args)
         .map_err(|e| anyhow::anyhow!("failed to parse command: {e:?}"))?;
 
-    let result = match args.cmd {
-        ProgramSubCommand::Init(args) => tasks::init::run(&args),
+    match args.cmd {
+        ProgramSubCommand::New(args) => tasks::new::run(&args),
         ProgramSubCommand::Build(args) => tasks::build::run(&args),
         ProgramSubCommand::Run(args) => tasks::run::run(&args),
         ProgramSubCommand::Jar(args) => tasks::jar::run(&args),
@@ -88,7 +114,11 @@ fn main() -> anyhow::Result<()> {
         ProgramSubCommand::Aw(args) => tasks::aw::run(&args),
         ProgramSubCommand::Intellij(args) => tasks::intellij::run(&args),
         ProgramSubCommand::Sources(args) => tasks::sources::run(&args),
-    };
+    }
+}
+
+fn main() -> anyhow::Result<()> {
+    let result = fake_main();
 
     if let Err(ref e) = result {
         let mut con = richrs::console::Console::new();

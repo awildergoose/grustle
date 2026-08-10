@@ -10,6 +10,8 @@
 - [x] run server support
 - [x] resource preprocessor (json ${defines})
 - [x] fix lock hash
+- [x] `new` command to create new projects
+- [ ] datagen support
 - [ ] vineflower caching
 - [ ] improve the registry system by specifying download locations
 - [ ] allow fabuild to download dependencies

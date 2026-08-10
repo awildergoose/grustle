@@ -223,14 +223,9 @@ pub fn parse_project(text: &str) -> anyhow::Result<FabuildProject> {
 }
 
 pub fn load_root_project(root: &Path) -> anyhow::Result<FabuildProject> {
-    // if std::fs::exists("fabuild.toml").is_ok_and(|s| s) {
-    //     return parse_project(&std::fs::read_to_string("fabuild.toml")?);
-    // }
-
-    // anyhow::bail!("failed to load project")
-    parse_project(
-        &std::fs::read_to_string(root.join("fabuild.toml")).context("loading the root project")?,
-    )
+    parse_project(&std::fs::read_to_string(root.join("fabuild.toml")).context(
+        "loading the root project failed, did you point to a folder without a fabuild project?",
+    )?)
 }
 
 /// Loads the project and its dependencies into a `FabuildProjectTree`.

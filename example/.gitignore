@@ -1,5 +1,8 @@
 /run
-/target
+
+# Fabuild
 /fabuild.lock
+/target
+
+# IDE specific
 /.idea
-/Makefile
