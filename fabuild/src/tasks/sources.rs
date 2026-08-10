@@ -39,6 +39,7 @@ pub fn run(args: &ProgramSourcesSubCommand) -> anyhow::Result<()> {
         vineflower.display()
     ))?;
 
+    // TODO: utilize a cache by making our own lib that uses vineflower
     anyhow::ensure!(
         Command::new("java")
             .arg("-jar")
