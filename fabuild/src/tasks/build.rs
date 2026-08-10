@@ -301,6 +301,9 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     iter_folder(&mut raw_resources, &root.join("src/main/resources"))?;
     iter_folder(&mut raw_resources, &root.join("src/client/resources"))?;
 
+    let mut datagen_resources = vec![];
+    iter_folder(&mut datagen_resources, &root.join("src/main/generated/"))?;
+
     for (_, task) in processes {
         progress.remove_task(task);
     }
@@ -312,46 +315,59 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
         resources.insert(resource.clone(), out);
     }
 
+    for resource in &datagen_resources {
+        resources.insert(resource.clone(), std::fs::read(resource)?);
+    }
+
     let task = progress.add_task(
         "Processing resources...",
-        Some(raw_resources.len() as u64),
+        Some(resources.len() as u64),
         true,
     );
 
     println!();
 
     for (path, content) in &resources {
-        let to = target_classes.join(
-            path.canonicalize()?
-                .display()
-                .to_string()
-                .trim_start_matches(
-                    &root
-                        .join("src")
-                        .join("main")
-                        .join("resources")
-                        .canonicalize()?
-                        .display()
-                        .to_string(),
-                )
-                .trim_start_matches(
-                    &root
-                        .join("src")
-                        .join("client")
-                        .join("resources")
-                        .canonicalize()?
-                        .display()
-                        .to_string(),
-                )
-                .trim_start_matches('/')
-                .trim_start_matches('\\'),
-        );
-        std::fs::create_dir_all(
-            to.parent().ok_or_else(|| {
+        // I'm incredibly sorry
+        let binding = path.canonicalize()?.display().to_string();
+        let relative = binding
+            .trim_start_matches(
+                &root
+                    .join("src")
+                    .join("main")
+                    .join("resources")
+                    .canonicalize()?
+                    .display()
+                    .to_string(),
+            )
+            .trim_start_matches(
+                &root
+                    .join("src")
+                    .join("client")
+                    .join("resources")
+                    .canonicalize()?
+                    .display()
+                    .to_string(),
+            )
+            .trim_start_matches(
+                &root
+                    .join("src")
+                    .join("main")
+                    .join("generated")
+                    .canonicalize()?
+                    .display()
+                    .to_string(),
+            )
+            .trim_start_matches('/')
+            .trim_start_matches('\\');
+
+        if !relative.starts_with(".cache") {
+            let to = target_classes.join(relative);
+            std::fs::create_dir_all(to.parent().ok_or_else(|| {
                 anyhow::anyhow!("failed to find parent folder of {}", to.display())
-            })?,
-        )?;
-        std::fs::write(to, content)?;
+            })?)?;
+            std::fs::write(to, content)?;
+        }
 
         progress.advance(task, 1)?;
         let output = progress.render(40);
