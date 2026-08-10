@@ -6,6 +6,9 @@ pub const GITIGNORE: &str = r"/run
 
 # IDE specific
 /.idea
+
+# Datagen
+/src/main/generated/.cache
 ";
 // com.azure.azure-json
 // name = "azure-json"
