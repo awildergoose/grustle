@@ -27,7 +27,7 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
 
     let project = load_root_project(root)?;
     let registry = load_default_registry();
-    let jregistry = load_default_jregistry();
+    let jregistry = load_default_jregistry()?;
     let tree = load_project_tree(root, &project, &registry)?;
 
     let entries = tree.gather_classpath(

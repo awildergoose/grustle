@@ -57,7 +57,10 @@ impl FabuildJRegistry {
     }
 }
 
-#[must_use]
-pub fn load_default_jregistry() -> FabuildJRegistry {
-    FabuildJRegistry::new("G:/steve/.fabuild".into())
+pub fn load_default_jregistry() -> anyhow::Result<FabuildJRegistry> {
+    Ok(FabuildJRegistry::new(
+        std::env::var("FABUILD_JREGISTRY")
+            .context("FABUILD_JREGISTRY has not been set")?
+            .into(),
+    ))
 }

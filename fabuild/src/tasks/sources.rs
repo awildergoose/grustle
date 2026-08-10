@@ -13,7 +13,7 @@ pub fn run(args: &ProgramSourcesSubCommand) -> anyhow::Result<()> {
     let root = &args.root;
 
     let project = load_root_project(root)?;
-    let jregistry = load_default_jregistry();
+    let jregistry = load_default_jregistry()?;
 
     let game_version = &project
         .dependencies
