@@ -14,3 +14,4 @@
 - [ ] neoforge support
 - [ ] warn of package name (groupId.artifactId) conflicts
 - [ ] resource preprocessor (json ${defines})
+- [ ] vineflower caching
