@@ -9,7 +9,7 @@
 - [x] generate sources command
 - [x] run server support
 - [x] resource preprocessor (json ${defines})
-- [ ] fix lock hash
+- [x] fix lock hash
 - [ ] vineflower caching
 - [ ] improve the registry system by specifying download locations
 - [ ] allow fabuild to download dependencies
