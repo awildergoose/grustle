@@ -23,6 +23,17 @@ pub struct ProgramEmptySubCommand {
 }
 
 #[derive(Args, Debug)]
+pub struct ProgramRunSubCommand {
+    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
+    pub root: PathBuf,
+    // little hack i hate
+    #[arg(long, default_value = "true")]
+    pub client: bool,
+    #[arg(long, default_value = "false")]
+    pub server: bool,
+}
+
+#[derive(Args, Debug)]
 pub struct ProgramSourcesSubCommand {
     #[arg(long, default_value = "PathBuf::from(\"../example\")")]
     pub root: PathBuf,
@@ -44,7 +55,7 @@ pub struct ProgramClasspathArgs {
 enum ProgramSubCommand {
     Init(ProgramEmptySubCommand),
     Build(ProgramEmptySubCommand),
-    Run(ProgramEmptySubCommand),
+    Run(ProgramRunSubCommand),
     Jar(ProgramEmptySubCommand),
     Classpath(ProgramClasspathArgs),
     Aw(ProgramEmptySubCommand),

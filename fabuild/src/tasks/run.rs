@@ -1,7 +1,7 @@
 use std::process::Command;
 
 use crate::{
-    ProgramEmptySubCommand,
+    ProgramRunSubCommand,
     jregistry::load_default_jregistry,
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
+pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
     let root = &args.root;
 
     let project = load_root_project(root)?;
@@ -32,33 +32,45 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     generate_log4j_config(root)?;
     generate_launch_config(root, &jregistry, &project)?;
 
-    anyhow::ensure!(
-        Command::new("java")
-            .arg("-cp")
-            .arg(format!("@{}", classpath_file.canonicalize()?.display()))
+    let mut binding = Command::new("java");
+    let mut command = binding
+        .current_dir(run_folder)
+        .arg("-cp")
+        .arg(format!("@{}", classpath_file.canonicalize()?.display()))
+        .arg(format!(
+            "-Dfabric.dli.config={}/launch.cfg",
+            launch_folder.canonicalize()?.display()
+        ))
+        // TODO: remove these, maybe?
+        .arg("--sun-misc-unsafe-memory-access=allow")
+        .arg("--enable-native-access=ALL-UNNAMED")
+        .arg("-Dfile.encoding=UTF-8")
+        .arg("-Duser.country=US")
+        .arg("-Duser.language=en");
+
+    if args.client && !args.server {
+        command = command
             .arg(format!(
                 "-Dfabric.classPathGroups={}",
                 classes_folder.canonicalize()?.display()
             ))
-            .arg(format!(
-                "-Dfabric.dli.config={}/launch.cfg",
-                launch_folder.canonicalize()?.display()
-            ))
             .arg("-Dfabric.dli.env=client")
-            .arg("-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient")
-            // TODO: remove these, maybe?
-            .arg("--sun-misc-unsafe-memory-access=allow")
-            .arg("--enable-native-access=ALL-UNNAMED")
-            .arg("-Dfile.encoding=UTF-8")
-            .arg("-Duser.country=US")
-            .arg("-Duser.language=en")
-            .arg("net.fabricmc.devlaunchinjector.Main")
-            .current_dir(run_folder)
-            .spawn()?
-            .wait()?
-            .success(),
-        "failed to run game client"
-    );
+            .arg("-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient");
+    } else if args.server {
+        command = command
+            .arg("-Dfabric.dli.env=server")
+            .arg("-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotServer");
+    } else {
+        anyhow::bail!("What are you even doing");
+    }
+
+    command = command.arg("net.fabricmc.devlaunchinjector.Main");
+
+    if args.server {
+        command = command.arg("nogui");
+    }
+
+    anyhow::ensure!(command.spawn()?.wait()?.success(), "failed to run game");
 
     Ok(())
 }
