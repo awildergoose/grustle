@@ -1,3 +1,4 @@
+use anyhow::Context;
 use std::process::Command;
 
 use crate::{
@@ -55,6 +56,20 @@ pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
         command = command
             .arg("-Dfabric.dli.env=server")
             .arg("-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotServer");
+    } else if args.datagen {
+        let out = root.join("src").join("main").join("generated");
+        std::fs::create_dir_all(&out)?;
+
+        command = command
+            .arg("-Dfabric-api.datagen")
+            .arg(format!(
+                "-Dfabric-api.datagen.output-dir={}",
+                out.canonicalize()
+                    .context("canonicalizing datagen output folder")?
+                    .display()
+            ))
+            .arg("-Dfabric.dli.env=client")
+            .arg("-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient");
     } else {
         command = command
             .arg(format!(
