@@ -33,5 +33,12 @@ pub fn preprocess_resource_file(tree: &FabuildProjectTree, path: &Path) -> anyho
         out = out.replace(&format!("${{project.extra.{key}}}"), value);
     }
 
+    for package in &tree.packages {
+        out = out.replace(
+            &format!("${{project.packages.{}.version}}", package.get_full_name()),
+            &package.ver,
+        );
+    }
+
     Ok(out.into())
 }

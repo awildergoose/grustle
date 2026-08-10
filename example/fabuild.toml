@@ -5,6 +5,7 @@ ver = "1.0.0"
 
 [extra]
 display_name = "Template Mod"
+this_can_be_anything = "true"
 
 [dependencies]
 fabric = "0.19.3"
