@@ -84,6 +84,8 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     std::fs::create_dir_all(&target_sources)?;
     std::fs::create_dir_all(&target_classes)?;
 
+    let mut processed_sources = HashMap::new();
+
     for file in &sources {
         let target = target_sources.join(PathBuf::from(
             &file
@@ -98,7 +100,9 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
             anyhow::anyhow!("failed to get parent of path {}", target.display())
         })?)?;
 
-        preprocess_source_file(&tree, file, &target)?;
+        let output = preprocess_source_file(&tree, file)?;
+        std::fs::write(target, output.clone())?;
+        processed_sources.insert(file.clone(), output);
     }
 
     sources = vec![];
@@ -136,10 +140,12 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
                     .ok_or_else(|| anyhow::anyhow!("no filename for \"{}\"?", file.display()))?
                     .to_string_lossy()
                     .to_string(),
-                std::fs::read_to_string(file).context(format!(
-                    "failed to read post-processed file: {}",
-                    file.display()
-                ))?,
+                processed_sources
+                    .get(file)
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("failed to read post-processed file: {}", file.display())
+                    })?
+                    .clone(),
             ),
         );
     }

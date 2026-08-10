@@ -16,11 +16,7 @@ pub fn is_positive(text: &str) -> bool {
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn preprocess_source_file(
-    tree: &FabuildProjectTree,
-    path: &Path,
-    out_path: &Path,
-) -> anyhow::Result<()> {
+pub fn preprocess_source_file(tree: &FabuildProjectTree, path: &Path) -> anyhow::Result<String> {
     let filename = path
         .file_name()
         .ok_or_else(|| anyhow::anyhow!("filename is non UTF-8"))?
@@ -186,7 +182,6 @@ pub fn preprocess_source_file(
     }
 
     anyhow::ensure!(can_emit == 0, "unescaped condition in {filename}");
-    std::fs::write(out_path, out)?;
 
-    Ok(())
+    Ok(out)
 }
