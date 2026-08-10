@@ -79,8 +79,13 @@ pub fn get_target_sources_file(root: &Path) -> PathBuf {
 }
 
 #[must_use]
-pub fn get_target_classpath_file(root: &Path) -> PathBuf {
+pub fn get_target_common_classpath_file(root: &Path) -> PathBuf {
     get_target_folder(root).join("classpath.tmp")
+}
+
+#[must_use]
+pub fn get_target_client_classpath_file(root: &Path) -> PathBuf {
+    get_target_folder(root).join("classpath_client.tmp")
 }
 
 #[must_use]
@@ -169,7 +174,7 @@ clientProperties
     Ok(())
 }
 
-pub fn generate_classpath(
+pub fn generate_client_classpath(
     root: &Path,
     jregistry: &FabuildJRegistry,
     tree: &FabuildProjectTree,
@@ -183,7 +188,48 @@ pub fn generate_classpath(
         true,
     )?;
     let classes: Vec<String> = entries.iter().flat_map(|s| s.classes.clone()).collect();
-    std::fs::write(get_target_classpath_file(root), classes.join(";"))?;
+    std::fs::write(get_target_client_classpath_file(root), classes.join(";"))?;
+
+    Ok(())
+}
+
+pub fn generate_common_classpath(
+    root: &Path,
+    jregistry: &FabuildJRegistry,
+    tree: &FabuildProjectTree,
+) -> anyhow::Result<()> {
+    std::fs::create_dir_all(get_target_classes_folder(root))?;
+    let game_client_version = tree
+        .root
+        .dependencies
+        .get("minecraft-client")
+        .ok_or_else(|| anyhow::anyhow!("minecraft-client is not in the dependency list!"))?
+        .version
+        .clone();
+
+    let entries = tree.gather_classpath(
+        root,
+        jregistry,
+        SystemArchitecture::Auto.resolve(),
+        true,
+        true,
+    )?;
+    let mut classes: Vec<String> = entries.iter().flat_map(|s| s.classes.clone()).collect();
+    let minecraft_client = jregistry
+        .resolve_file(
+            root,
+            "minecraft-client",
+            &game_client_version,
+            "minecraft-client.jar",
+        )?
+        .display()
+        .to_string();
+    classes = classes
+        .iter()
+        .filter(|s| **s != minecraft_client)
+        .cloned()
+        .collect::<Vec<String>>();
+    std::fs::write(get_target_common_classpath_file(root), classes.join(";"))?;
 
     Ok(())
 }

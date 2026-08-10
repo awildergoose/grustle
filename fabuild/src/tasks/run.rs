@@ -6,8 +6,8 @@ use crate::{
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
     util::{
-        generate_classpath, generate_launch_config, generate_log4j_config, get_run_folder,
-        get_target_classes_folder, get_target_classpath_file, get_target_launch_folder,
+        generate_client_classpath, generate_launch_config, generate_log4j_config, get_run_folder,
+        get_target_classes_folder, get_target_client_classpath_file, get_target_launch_folder,
     },
 };
 
@@ -20,7 +20,7 @@ pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
     let tree = load_project_tree(root, &project, &registry)?;
 
     let run_folder = get_run_folder(root);
-    let classpath_file = get_target_classpath_file(root);
+    let client_classpath_file = get_target_client_classpath_file(root);
     let classes_folder = get_target_classes_folder(root);
     let launch_folder = get_target_launch_folder(root);
 
@@ -28,7 +28,7 @@ pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
     std::fs::create_dir_all(&classes_folder)?;
     std::fs::create_dir_all(&launch_folder)?;
 
-    generate_classpath(root, &jregistry, &tree)?;
+    generate_client_classpath(root, &jregistry, &tree)?;
     generate_log4j_config(root)?;
     generate_launch_config(root, &jregistry, &project)?;
 
@@ -36,7 +36,10 @@ pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
     let mut command = binding
         .current_dir(run_folder)
         .arg("-cp")
-        .arg(format!("@{}", classpath_file.canonicalize()?.display()))
+        .arg(format!(
+            "@{}",
+            client_classpath_file.canonicalize()?.display()
+        ))
         .arg(format!(
             "-Dfabric.dli.config={}/launch.cfg",
             launch_folder.canonicalize()?.display()

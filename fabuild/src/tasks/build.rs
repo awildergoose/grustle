@@ -20,8 +20,9 @@ use crate::{
     registry::load_default_registry,
     tweaker::{get_class_tweakers, invoke_class_tweakers},
     util::{
-        generate_classpath, get_target_classes_folder, get_target_classpath_file,
-        get_target_classtweakers_folder, get_target_sources_file,
+        generate_client_classpath, generate_common_classpath, get_target_classes_folder,
+        get_target_classtweakers_folder, get_target_client_classpath_file,
+        get_target_common_classpath_file, get_target_sources_file,
     },
 };
 
@@ -50,7 +51,8 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let registry = load_default_registry();
     let jregistry = load_default_jregistry();
     let tree = load_project_tree(root, &project, &registry)?;
-    generate_classpath(root, &jregistry, &tree)?;
+    generate_common_classpath(root, &jregistry, &tree)?;
+    generate_client_classpath(root, &jregistry, &tree)?;
 
     // if the classtweakers changed, reinvoke quick-tweak
     for (new_path, new_filename) in get_class_tweakers(root)? {
@@ -78,8 +80,8 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let target_classes = get_target_classes_folder(root);
 
     // clean slate
-    std::fs::remove_dir_all(&target_sources)?;
-    std::fs::remove_dir_all(&target_classes)?;
+    let _ = std::fs::remove_dir_all(&target_sources);
+    let _ = std::fs::remove_dir_all(&target_classes);
 
     std::fs::create_dir_all(&target_sources)?;
     std::fs::create_dir_all(&target_classes)?;
@@ -117,10 +119,6 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
         "-d".to_owned(),
         target_classes.canonicalize()?.display().to_string(),
         "-cp".to_owned(),
-        format!(
-            "@{}",
-            get_target_classpath_file(root).canonicalize()?.display()
-        ),
     ];
 
     let mut processes = vec![];
@@ -160,6 +158,16 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
                         .collect::<anyhow::Result<Vec<PathBuf>>>()?,
                 )
                 .args(command_args.clone())
+                .arg(format!(
+                    "@{}",
+                    if i == 0 {
+                        get_target_common_classpath_file(root)
+                    } else {
+                        get_target_client_classpath_file(root)
+                    }
+                    .canonicalize()?
+                    .display()
+                ))
                 .current_dir(&target_sources)
                 .stdout(if i == 0 {
                     shared_write.try_clone()?
