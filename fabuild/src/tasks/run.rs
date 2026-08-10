@@ -48,7 +48,11 @@ pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
         .arg("-Duser.country=US")
         .arg("-Duser.language=en");
 
-    if args.client && !args.server {
+    if args.server {
+        command = command
+            .arg("-Dfabric.dli.env=server")
+            .arg("-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotServer");
+    } else {
         command = command
             .arg(format!(
                 "-Dfabric.classPathGroups={}",
@@ -56,12 +60,6 @@ pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
             ))
             .arg("-Dfabric.dli.env=client")
             .arg("-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient");
-    } else if args.server {
-        command = command
-            .arg("-Dfabric.dli.env=server")
-            .arg("-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotServer");
-    } else {
-        anyhow::bail!("What are you even doing");
     }
 
     command = command.arg("net.fabricmc.devlaunchinjector.Main");

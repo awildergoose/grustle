@@ -17,13 +17,10 @@
     "environment": "*",
     "entrypoints": {
         "main": [
-            "com.example.TemplateMod"
+            "com.example.example.TemplateMod"
         ],
         "client": [
-            "com.example.client.TemplateModClient"
-        ],
-        "fabric-datagen": [
-            "com.example.client.TemplateModDataGenerator"
+            "com.example.example.client.TemplateModClient"
         ]
     },
     "mixins": [

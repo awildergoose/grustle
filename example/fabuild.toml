@@ -1,5 +1,5 @@
 [package]
-name = "template-mod"
+name = "example"
 path = "com.example"
 ver = "1.0.0"
 
@@ -14,5 +14,5 @@ minecraft-client = "26.2"
 test = { version = "1.0.0", embedded = true, location = "test" }
 
 [version]
-runtime = ["template-mod.jar"]
-sources = ["template-mod-sources.jar"]
+runtime = ["example.jar"]
+sources = ["example-sources.jar"]

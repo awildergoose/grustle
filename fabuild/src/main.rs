@@ -49,9 +49,6 @@ pub struct ProgramNewSubCommand {
 pub struct ProgramRunSubCommand {
     #[arg(long, default_value = "PathBuf::from(\"../example\")")]
     pub root: PathBuf,
-    // little hack i hate
-    #[arg(long, default_value = "true")]
-    pub client: bool,
     #[arg(long, default_value = "false")]
     pub server: bool,
 }
