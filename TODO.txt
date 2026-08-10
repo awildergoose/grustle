@@ -13,6 +13,7 @@
 - [x] `new` command to create new projects
 - [x] datagen support
 - [ ] vineflower caching
+- [ ] proper phase detection (e.g. check if we've created AWs yet in `build`)
 - [ ] improve the registry system by specifying download locations
 - [ ] allow fabuild to download dependencies
 - [ ] multi-version and multi-loader support (stonecutter-like preprocessor)
