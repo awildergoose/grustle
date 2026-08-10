@@ -94,8 +94,8 @@ pub fn get_target_qt_file(root: &Path) -> PathBuf {
 }
 
 #[must_use]
-pub fn get_target_vineflower_file(root: &Path) -> PathBuf {
-    get_target_aw_folder(root).join("vineflower.jar")
+pub fn get_target_cachyflower_file(root: &Path) -> PathBuf {
+    get_target_aw_folder(root).join("cachyflower.jar")
 }
 
 #[must_use]

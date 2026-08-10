@@ -12,7 +12,7 @@
 - [x] fix lock hash
 - [x] `new` command to create new projects
 - [x] datagen support
-- [ ] vineflower caching
+- [x] vineflower caching (cachyflower)
 - [ ] proper phase detection (e.g. check if we've created AWs yet in `build`)
 - [ ] improve the registry system by specifying download locations
 - [ ] allow fabuild to download dependencies

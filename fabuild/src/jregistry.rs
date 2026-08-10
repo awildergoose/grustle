@@ -50,6 +50,11 @@ impl FabuildJRegistry {
 
         Ok(self.resolve_path(name, version)?.join(filename))
     }
+
+    #[must_use]
+    pub fn resolve_cachyflower_cache(&self) -> PathBuf {
+        self.root.join(".cfcache")
+    }
 }
 
 #[must_use]
