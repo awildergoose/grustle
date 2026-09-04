@@ -127,6 +127,7 @@ impl GrustleProjectTree {
     pub fn gather_classpath(
         &self,
         root: &Path,
+        profile: &str,
         jregistry: &GrustleJRegistry,
         architecture: SystemArchitecture,
         should_resolve_root: bool,
@@ -149,6 +150,7 @@ impl GrustleProjectTree {
             for filename in &package.version.sources {
                 let resolved = jregistry.resolve_file(
                     root,
+                    profile,
                     &package.get_full_name(),
                     &package.ver,
                     filename,
@@ -159,6 +161,7 @@ impl GrustleProjectTree {
             for filename in &package.version.runtime {
                 let resolved = jregistry.resolve_file(
                     root,
+                    profile,
                     &package.get_full_name(),
                     &package.ver,
                     filename,
@@ -175,6 +178,7 @@ impl GrustleProjectTree {
                 } {
                     let resolved = jregistry.resolve_file(
                         root,
+                        profile,
                         &package.get_full_name(),
                         &package.ver,
                         filename,
@@ -191,7 +195,7 @@ impl GrustleProjectTree {
             out.push(ClasspathEntry {
                 classes: vec![format!(
                     "{}",
-                    get_target_classes_folder(root)
+                    get_target_classes_folder(root, profile)
                         .canonicalize()
                         .context("classes folder hasn't been created yet")?
                         .display()

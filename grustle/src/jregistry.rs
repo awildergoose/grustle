@@ -36,13 +36,14 @@ impl GrustleJRegistry {
     pub fn resolve_file(
         &self,
         project_root: &Path,
+        profile: &str,
         name: &str,
         version: &str,
         filename: &str,
     ) -> anyhow::Result<PathBuf> {
         // sorry
         if name == "minecraft" || name == "minecraft-client" {
-            return get_target_aw_folder(project_root)
+            return get_target_aw_folder(project_root, profile)
                 .join(format!("{name}.jar"))
                 .canonicalize()
                 .context(format!("canonicalizing {name}.jar"));

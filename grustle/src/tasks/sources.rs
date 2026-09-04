@@ -3,7 +3,7 @@ use std::process::Command;
 use anyhow::Context;
 
 use crate::{
-    ProgramSourcesSubCommand,
+    commands::{ProfilefulArg, ProgramSourcesSubCommand},
     jregistry::load_default_jregistry,
     project::load_root_project,
     util::{get_target_aw_folder, get_target_cachyflower_file},
@@ -11,6 +11,7 @@ use crate::{
 
 pub fn run(args: &ProgramSourcesSubCommand) -> anyhow::Result<()> {
     let root = &args.root;
+    let profile = args.profile();
 
     let project = load_root_project(root)?;
     let jregistry = load_default_jregistry()?;
@@ -28,10 +29,10 @@ pub fn run(args: &ProgramSourcesSubCommand) -> anyhow::Result<()> {
         .version
         .clone();
 
-    let target_game = get_target_aw_folder(root);
+    let target_game = get_target_aw_folder(root, profile);
     std::fs::create_dir_all(&target_game)?;
 
-    let cachyflower = &get_target_cachyflower_file(root);
+    let cachyflower = &get_target_cachyflower_file(root, profile);
     std::fs::write(cachyflower, include_bytes!("../../tools/cachyflower.jar"))?;
 
     let cachyflower = &cachyflower.canonicalize().context(format!(
@@ -49,7 +50,13 @@ pub fn run(args: &ProgramSourcesSubCommand) -> anyhow::Result<()> {
             .arg(cachyflower)
             .arg(args.threads.to_string())
             .arg(&cf_cache)
-            .arg(jregistry.resolve_file(root, "minecraft", game_version, "minecraft.jar")?) // input file
+            .arg(jregistry.resolve_file(
+                root,
+                profile,
+                "minecraft",
+                game_version,
+                "minecraft.jar"
+            )?) // input file
             .arg(target_game.join("minecraft-sources.jar")) // output file
             .spawn()?
             .wait()?
@@ -65,6 +72,7 @@ pub fn run(args: &ProgramSourcesSubCommand) -> anyhow::Result<()> {
             .arg(&cf_cache)
             .arg(jregistry.resolve_file(
                 root,
+                profile,
                 "minecraft-client",
                 game_client_version,
                 "minecraft-client.jar"

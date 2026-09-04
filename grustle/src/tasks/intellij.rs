@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use crate::{
-    ProgramEmptySubCommand,
+    commands::{ProfilefulArg, ProgramEmptySubCommand},
     jregistry::load_default_jregistry,
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
@@ -10,6 +10,8 @@ use crate::{
 
 pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let root = &args.root;
+    let profile = args.profile();
+
     let mut out = r#"<?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
     <component name="NewModuleRootManager" inherit-compiler-output="true">
@@ -32,6 +34,7 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
 
     let entries = tree.gather_classpath(
         root,
+        profile,
         &jregistry,
         SystemArchitecture::Auto.resolve(),
         false,

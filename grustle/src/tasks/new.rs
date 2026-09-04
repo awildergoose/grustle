@@ -1,5 +1,5 @@
 use crate::{
-    ProgramNewSubCommand,
+    commands::ProgramNewSubCommand,
     template::{
         FABRIC_MOD_JSON, GITIGNORE, GRUSTLE_TOML, MIXINS_CLIENT_JSON, MIXINS_JSON, MOD_CLIENT_JAVA,
         MOD_JAVA, TEMPLATE_ICON,

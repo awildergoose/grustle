@@ -26,6 +26,7 @@ pub fn get_class_tweakers(root: &Path) -> anyhow::Result<Vec<(PathBuf, String)>>
 
 pub fn invoke_class_tweakers(
     root: &Path,
+    profile: &str,
     project: &GrustleProject,
     jregistry: &GrustleJRegistry,
 ) -> anyhow::Result<()> {
@@ -42,12 +43,15 @@ pub fn invoke_class_tweakers(
         .version
         .clone();
 
-    let target_classtweakers = get_target_classtweakers_folder(root);
-    let target_game = get_target_aw_folder(root);
+    let target_classtweakers = get_target_classtweakers_folder(root, profile);
+    let target_game = get_target_aw_folder(root, profile);
 
     std::fs::create_dir_all(&target_classtweakers)?;
     std::fs::create_dir_all(&target_game)?;
-    std::fs::write(get_target_qt_file(root), include_bytes!("../tools/qt.jar"))?;
+    std::fs::write(
+        get_target_qt_file(root, profile),
+        include_bytes!("../tools/qt.jar"),
+    )?;
 
     for (path, file_name) in get_class_tweakers(root)? {
         std::fs::copy(path, target_classtweakers.join(file_name))?;
@@ -56,7 +60,7 @@ pub fn invoke_class_tweakers(
     anyhow::ensure!(
         Command::new("java")
             .arg("-jar")
-            .arg(get_target_qt_file(root))
+            .arg(get_target_qt_file(root, profile))
             .arg(
                 jregistry
                     .resolve_path("minecraft", &game_version)?
@@ -78,7 +82,7 @@ pub fn invoke_class_tweakers(
     anyhow::ensure!(
         Command::new("java")
             .arg("-jar")
-            .arg(get_target_qt_file(root))
+            .arg(get_target_qt_file(root, profile))
             .arg(
                 jregistry
                     .resolve_path("minecraft-client", game_client_version)?

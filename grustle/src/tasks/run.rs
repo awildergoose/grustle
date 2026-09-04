@@ -2,7 +2,7 @@ use anyhow::Context;
 use std::process::Command;
 
 use crate::{
-    ProgramRunSubCommand,
+    commands::{ProfilefulArg, ProgramRunSubCommand},
     jregistry::load_default_jregistry,
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
@@ -14,24 +14,28 @@ use crate::{
 
 pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
     let root = &args.root;
+    let profile = args.profile();
 
     let project = load_root_project(root)?;
     let registry = load_default_registry();
     let jregistry = load_default_jregistry()?;
     let tree = load_project_tree(root, &project, &registry)?;
 
+    // TODO: check if access wideners were even created
+    // and recompile if needed
+
     let run_folder = get_run_folder(root);
-    let client_classpath_file = get_target_client_classpath_file(root);
-    let classes_folder = get_target_classes_folder(root);
-    let launch_folder = get_target_launch_folder(root);
+    let client_classpath_file = get_target_client_classpath_file(root, profile);
+    let classes_folder = get_target_classes_folder(root, profile);
+    let launch_folder = get_target_launch_folder(root, profile);
 
     std::fs::create_dir_all(&run_folder)?;
     std::fs::create_dir_all(&classes_folder)?;
     std::fs::create_dir_all(&launch_folder)?;
 
-    generate_client_classpath(root, &jregistry, &tree)?;
-    generate_log4j_config(root)?;
-    generate_launch_config(root, &jregistry, &project)?;
+    generate_client_classpath(root, profile, &jregistry, &tree)?;
+    generate_log4j_config(root, profile)?;
+    generate_launch_config(root, profile, &jregistry, &project)?;
 
     let mut binding = Command::new("java");
     let mut command = binding

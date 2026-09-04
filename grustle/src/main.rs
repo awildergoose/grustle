@@ -1,5 +1,10 @@
 #![allow(clippy::missing_errors_doc)]
 
+use arg::Args;
+
+use crate::commands::{ProgramArgs, ProgramSubCommand};
+
+pub mod commands;
 pub mod error_parser;
 pub mod error_styler;
 pub mod jregistry;
@@ -10,94 +15,6 @@ pub mod tasks;
 pub mod template;
 pub mod tweaker;
 pub mod util;
-
-use std::path::PathBuf;
-
-use arg::Args;
-
-use crate::util::SystemArchitecture;
-
-#[cfg(debug_assertions)]
-const ROOT: &str = "../example";
-#[cfg(not(debug_assertions))]
-const ROOT: &str = "./";
-
-#[derive(Args, Debug)]
-pub struct ProgramEmptySubCommand {
-    #[arg(long, default_value = "PathBuf::from(ROOT)")]
-    pub root: PathBuf,
-}
-
-#[derive(Args, Debug)]
-pub struct ProgramNewSubCommand {
-    #[arg(long, default_value = "PathBuf::from(ROOT)")]
-    pub root: PathBuf,
-
-    #[arg(short, long, required)]
-    pub namespace: String,
-    #[arg(short, long, required)]
-    pub identifier: String,
-    #[arg(short, long, required)]
-    pub classname: String,
-    #[arg(short, long, required)]
-    pub display_name: String,
-
-    #[arg(short, long, default_value = "\"26.2\".to_string()")]
-    pub minecraft_version: String,
-    #[arg(short, long, default_value = "\"0.19.3\".to_string()")]
-    pub fabric_version: String,
-    #[arg(short, long, default_value = "\"0.155.2\".to_string()")]
-    pub fabric_api_version: String,
-}
-
-#[derive(Args, Debug)]
-pub struct ProgramRunSubCommand {
-    #[arg(long, default_value = "PathBuf::from(ROOT)")]
-    pub root: PathBuf,
-    #[arg(long)]
-    pub server: bool,
-    #[arg(long)]
-    pub datagen: bool,
-}
-
-#[derive(Args, Debug)]
-pub struct ProgramSourcesSubCommand {
-    #[arg(long, default_value = "PathBuf::from(ROOT)")]
-    pub root: PathBuf,
-    #[arg(
-        long,
-        default_value = "std::thread::available_parallelism().map(|n| (n.get() / 2) as u32).unwrap_or(2)"
-    )]
-    pub threads: u32,
-}
-
-#[derive(Args, Debug)]
-pub struct ProgramClasspathArgs {
-    #[arg(long, default_value = "PathBuf::from(ROOT)")]
-    pub root: PathBuf,
-    #[arg(short, long, default_value = "false")]
-    pub sources: bool,
-    #[arg(long, default_value = "SystemArchitecture::Auto")]
-    pub arch: SystemArchitecture,
-}
-
-#[derive(Args, Debug)]
-enum ProgramSubCommand {
-    New(ProgramNewSubCommand),
-    Build(ProgramEmptySubCommand),
-    Run(ProgramRunSubCommand),
-    Jar(ProgramEmptySubCommand),
-    Classpath(ProgramClasspathArgs),
-    Aw(ProgramEmptySubCommand),
-    Intellij(ProgramEmptySubCommand),
-    Sources(ProgramSourcesSubCommand),
-}
-
-#[derive(Args, Debug)]
-struct ProgramArgs {
-    #[arg(sub)]
-    cmd: ProgramSubCommand,
-}
 
 fn real_main() -> anyhow::Result<()> {
     // TODO: improve this

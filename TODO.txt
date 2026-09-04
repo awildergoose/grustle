@@ -14,6 +14,7 @@
 - [x] datagen support
 - [x] vineflower caching (cachyflower)
 - [x] copy datagenned resources to the classes folder
+- [x] target profiles (release/debug)
 - [ ] make cachyflower (un)zip the caches instead of wasting precious I/O time
 - [ ] proper phase detection (e.g. check if we've created AWs yet in `build`)
 - [ ] improve the registry system by specifying download locations

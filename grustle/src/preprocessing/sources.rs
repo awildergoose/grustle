@@ -19,7 +19,11 @@ pub fn is_positive(text: &str) -> anyhow::Result<bool> {
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn preprocess_source_file(tree: &GrustleProjectTree, path: &Path) -> anyhow::Result<String> {
+pub fn preprocess_source_file(
+    tree: &GrustleProjectTree,
+    profile: &str,
+    path: &Path,
+) -> anyhow::Result<String> {
     let filename = path
         .file_name()
         .ok_or_else(|| anyhow::anyhow!("filename is non UTF-8"))?
@@ -34,6 +38,14 @@ pub fn preprocess_source_file(tree: &GrustleProjectTree, path: &Path) -> anyhow:
 
     let mut defines = HashMap::new();
     defines.insert("GRUSTLE".to_owned(), "true".to_owned());
+    defines.insert("PROFILE".to_owned(), profile.to_owned());
+
+    // TODO: allow for other profiles to auto-add these, perhaps?
+    if profile == "debug" {
+        defines.insert("DEBUG".to_owned(), "true".to_owned());
+    } else if profile == "release" {
+        defines.insert("RELEASE".to_owned(), "true".to_owned());
+    }
 
     for (line_index, line) in content
         .split('\n')

@@ -49,53 +49,53 @@ impl SystemArchitecture {
 }
 
 #[must_use]
-pub fn get_target_folder(root: &Path) -> PathBuf {
-    root.join("target")
+pub fn get_target_folder(root: &Path, profile: &str) -> PathBuf {
+    root.join("target").join(profile)
 }
 
 #[must_use]
-pub fn get_target_classes_folder(root: &Path) -> PathBuf {
-    get_target_folder(root).join("classes")
+pub fn get_target_classes_folder(root: &Path, profile: &str) -> PathBuf {
+    get_target_folder(root, profile).join("classes")
 }
 
 #[must_use]
-pub fn get_target_launch_folder(root: &Path) -> PathBuf {
-    get_target_folder(root).join("launch")
+pub fn get_target_launch_folder(root: &Path, profile: &str) -> PathBuf {
+    get_target_folder(root, profile).join("launch")
 }
 
 #[must_use]
-pub fn get_target_classtweakers_folder(root: &Path) -> PathBuf {
-    get_target_folder(root).join("classtweakers")
+pub fn get_target_classtweakers_folder(root: &Path, profile: &str) -> PathBuf {
+    get_target_folder(root, profile).join("classtweakers")
 }
 
 #[must_use]
-pub fn get_target_aw_folder(root: &Path) -> PathBuf {
-    get_target_folder(root).join("aw")
+pub fn get_target_aw_folder(root: &Path, profile: &str) -> PathBuf {
+    get_target_folder(root, profile).join("aw")
 }
 
 #[must_use]
-pub fn get_target_sources_file(root: &Path) -> PathBuf {
-    get_target_folder(root).join("sources")
+pub fn get_target_sources_file(root: &Path, profile: &str) -> PathBuf {
+    get_target_folder(root, profile).join("sources")
 }
 
 #[must_use]
-pub fn get_target_common_classpath_file(root: &Path) -> PathBuf {
-    get_target_folder(root).join("classpath.tmp")
+pub fn get_target_common_classpath_file(root: &Path, profile: &str) -> PathBuf {
+    get_target_folder(root, profile).join("classpath.tmp")
 }
 
 #[must_use]
-pub fn get_target_client_classpath_file(root: &Path) -> PathBuf {
-    get_target_folder(root).join("classpath_client.tmp")
+pub fn get_target_client_classpath_file(root: &Path, profile: &str) -> PathBuf {
+    get_target_folder(root, profile).join("classpath_client.tmp")
 }
 
 #[must_use]
-pub fn get_target_qt_file(root: &Path) -> PathBuf {
-    get_target_aw_folder(root).join("qt.jar")
+pub fn get_target_qt_file(root: &Path, profile: &str) -> PathBuf {
+    get_target_aw_folder(root, profile).join("qt.jar")
 }
 
 #[must_use]
-pub fn get_target_cachyflower_file(root: &Path) -> PathBuf {
-    get_target_aw_folder(root).join("cachyflower.jar")
+pub fn get_target_cachyflower_file(root: &Path, profile: &str) -> PathBuf {
+    get_target_aw_folder(root, profile).join("cachyflower.jar")
 }
 
 #[must_use]
@@ -103,19 +103,20 @@ pub fn get_run_folder(root: &Path) -> PathBuf {
     root.join("run")
 }
 
-pub fn generate_log4j_config(root: &Path) -> anyhow::Result<()> {
+pub fn generate_log4j_config(root: &Path, profile: &str) -> anyhow::Result<()> {
     Ok(std::fs::write(
-        get_target_launch_folder(root).join("log4j.xml"),
+        get_target_launch_folder(root, profile).join("log4j.xml"),
         LOG4J_CONFIG,
     )?)
 }
 
 pub fn generate_launch_config(
     root: &Path,
+    profile: &str,
     jregistry: &GrustleJRegistry,
     project: &GrustleProject,
 ) -> anyhow::Result<()> {
-    let launch = get_target_launch_folder(root);
+    let launch = get_target_launch_folder(root, profile);
 
     let game_version = project
         .dependencies
@@ -151,15 +152,18 @@ clientProperties
 ",
         launch.join("log4j.xml").canonicalize()?.display(), // log4j.configurationFile
         jregistry
-            .resolve_file(root, "minecraft", &game_version, "minecraft.jar")?
+            .resolve_file(root, profile, "minecraft", &game_version, "minecraft.jar")?
             .canonicalize()?
             .display(), // fabric.gameJarPath
-        get_target_classes_folder(root).canonicalize()?.display(), // fabric.classPathGroups
+        get_target_classes_folder(root, profile)
+            .canonicalize()?
+            .display(), // fabric.classPathGroups
         std::env::var("GRUSTLE_ASSETS_DIRECTORY")
             .context("GRUSTLE_ASSETS_DIRECTORY is not set!")?, // assetsDir
         jregistry
             .resolve_file(
                 root,
+                profile,
                 "minecraft-client",
                 &game_client_version,
                 "minecraft-client.jar"
@@ -176,29 +180,35 @@ clientProperties
 
 pub fn generate_client_classpath(
     root: &Path,
+    profile: &str,
     jregistry: &GrustleJRegistry,
     tree: &GrustleProjectTree,
 ) -> anyhow::Result<()> {
-    std::fs::create_dir_all(get_target_classes_folder(root))?;
+    std::fs::create_dir_all(get_target_classes_folder(root, profile))?;
     let entries = tree.gather_classpath(
         root,
+        profile,
         jregistry,
         SystemArchitecture::Auto.resolve(),
         true,
         true,
     )?;
     let classes: Vec<String> = entries.iter().flat_map(|s| s.classes.clone()).collect();
-    std::fs::write(get_target_client_classpath_file(root), classes.join(";"))?;
+    std::fs::write(
+        get_target_client_classpath_file(root, profile),
+        classes.join(";"),
+    )?;
 
     Ok(())
 }
 
 pub fn generate_common_classpath(
     root: &Path,
+    profile: &str,
     jregistry: &GrustleJRegistry,
     tree: &GrustleProjectTree,
 ) -> anyhow::Result<()> {
-    std::fs::create_dir_all(get_target_classes_folder(root))?;
+    std::fs::create_dir_all(get_target_classes_folder(root, profile))?;
     let game_client_version = tree
         .root
         .dependencies
@@ -209,6 +219,7 @@ pub fn generate_common_classpath(
 
     let entries = tree.gather_classpath(
         root,
+        profile,
         jregistry,
         SystemArchitecture::Auto.resolve(),
         true,
@@ -218,6 +229,7 @@ pub fn generate_common_classpath(
     let minecraft_client = jregistry
         .resolve_file(
             root,
+            profile,
             "minecraft-client",
             &game_client_version,
             "minecraft-client.jar",
@@ -229,7 +241,10 @@ pub fn generate_common_classpath(
         .filter(|s| **s != minecraft_client)
         .cloned()
         .collect::<Vec<String>>();
-    std::fs::write(get_target_common_classpath_file(root), classes.join(";"))?;
+    std::fs::write(
+        get_target_common_classpath_file(root, profile),
+        classes.join(";"),
+    )?;
 
     Ok(())
 }

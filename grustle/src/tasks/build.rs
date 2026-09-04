@@ -11,7 +11,7 @@ use bhc_diagnostics::SourceMap;
 use richrs::prelude::*;
 
 use crate::{
-    ProgramEmptySubCommand,
+    commands::{ProfilefulArg, ProgramBuildSubCommand},
     error_parser::{self, JavaDiagnostic},
     error_styler::print_pretty_error,
     jregistry::load_default_jregistry,
@@ -27,7 +27,7 @@ use crate::{
 };
 
 #[allow(clippy::too_many_lines)]
-pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
+pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     fn iter_folder(sources: &mut Vec<PathBuf>, path: &PathBuf) -> anyhow::Result<()> {
         for entry in std::fs::read_dir(path)? {
             let entry = entry?;
@@ -46,17 +46,20 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     }
 
     let root = &args.root;
+    let profile = args.profile();
 
     let project = load_root_project(root)?;
     let registry = load_default_registry();
     let jregistry = load_default_jregistry()?;
     let tree = load_project_tree(root, &project, &registry)?;
-    generate_common_classpath(root, &jregistry, &tree)?;
-    generate_client_classpath(root, &jregistry, &tree)?;
+    generate_common_classpath(root, profile, &jregistry, &tree)?;
+    generate_client_classpath(root, profile, &jregistry, &tree)?;
+
+    // TODO: check if access wideners were even created
 
     // if the classtweakers changed, reinvoke quick-tweak
     for (new_path, new_filename) in get_class_tweakers(root)? {
-        let old_path = get_target_classtweakers_folder(root).join(new_filename);
+        let old_path = get_target_classtweakers_folder(root, profile).join(new_filename);
 
         if std::fs::exists(&old_path)? {
             if !std::fs::read(&old_path)
@@ -64,10 +67,10 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
                 .eq(&std::fs::read(&new_path)
                     .context(format!("reading from {}", new_path.display()))?)
             {
-                invoke_class_tweakers(root, &project, &jregistry)?;
+                invoke_class_tweakers(root, profile, &project, &jregistry)?;
             }
         } else {
-            invoke_class_tweakers(root, &project, &jregistry)?;
+            invoke_class_tweakers(root, profile, &project, &jregistry)?;
         }
     }
 
@@ -76,8 +79,8 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     iter_folder(&mut sources, &root.join("src/client/java"))?;
 
     // preprocess the sources first
-    let target_sources = get_target_sources_file(root);
-    let target_classes = get_target_classes_folder(root);
+    let target_sources = get_target_sources_file(root, profile);
+    let target_classes = get_target_classes_folder(root, profile);
 
     // clean slate
     let _ = std::fs::remove_dir_all(&target_sources);
@@ -87,6 +90,8 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     std::fs::create_dir_all(&target_classes)?;
 
     let mut processed_sources = HashMap::new();
+
+    // TODO: incremental compilation
 
     for file in &sources {
         let target = target_sources.join(PathBuf::from(
@@ -102,7 +107,7 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
             anyhow::anyhow!("failed to get parent of path {}", target.display())
         })?)?;
 
-        let output = preprocess_source_file(&tree, file)?;
+        let output = preprocess_source_file(&tree, profile, file)?;
         std::fs::write(&target, output.clone())?;
         processed_sources.insert(target, output);
     }
@@ -161,9 +166,9 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
                 .arg(format!(
                     "@{}",
                     if i == 0 {
-                        get_target_common_classpath_file(root)
+                        get_target_common_classpath_file(root, profile)
                     } else {
-                        get_target_client_classpath_file(root)
+                        get_target_client_classpath_file(root, profile)
                     }
                     .canonicalize()?
                     .display()
@@ -257,7 +262,7 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
                 })?;
 
             for jar in &pkg.version.runtime {
-                let path = jregistry.resolve_file(root, &name, &dep.version, jar)?;
+                let path = jregistry.resolve_file(root, profile, &name, &dep.version, jar)?;
                 let mut zip = zip::read::ZipArchive::new(
                     File::open(&path).context(format!("opening jar at {}", path.display()))?,
                 )
