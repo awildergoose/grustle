@@ -1,7 +1,7 @@
 use crate::{
     ProgramNewSubCommand,
     template::{
-        FABRIC_MOD_JSON, FABUILD_TOML, GITIGNORE, MIXINS_CLIENT_JSON, MIXINS_JSON, MOD_CLIENT_JAVA,
+        FABRIC_MOD_JSON, GITIGNORE, GRUSTLE_TOML, MIXINS_CLIENT_JSON, MIXINS_JSON, MOD_CLIENT_JAVA,
         MOD_JAVA, TEMPLATE_ICON,
     },
 };
@@ -9,8 +9,8 @@ use crate::{
 pub fn run(args: &ProgramNewSubCommand) -> anyhow::Result<()> {
     let root = &args.root;
 
-    if std::fs::exists(root.join("fabuild.toml"))? {
-        anyhow::bail!("a fabuild project already exists at that folder!");
+    if std::fs::exists(root.join("grustle.toml"))? {
+        anyhow::bail!("a Grustle project already exists at that folder!");
     }
 
     macro_rules! rpath {
@@ -69,8 +69,8 @@ pub fn run(args: &ProgramNewSubCommand) -> anyhow::Result<()> {
 
     writef!(".gitignore", GITIGNORE);
     writef!(
-        "fabuild.toml",
-        FABUILD_TOML,
+        "grustle.toml",
+        GRUSTLE_TOML,
         identifier,
         namespace,
         display_name,

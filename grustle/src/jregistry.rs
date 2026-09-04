@@ -5,11 +5,11 @@ use anyhow::Context;
 use crate::util::get_target_aw_folder;
 
 /// The `JRegistry` contains references to the jar files.
-pub struct FabuildJRegistry {
+pub struct GrustleJRegistry {
     pub root: PathBuf,
 }
 
-impl FabuildJRegistry {
+impl GrustleJRegistry {
     #[must_use]
     pub const fn new(root: PathBuf) -> Self {
         Self { root }
@@ -57,10 +57,10 @@ impl FabuildJRegistry {
     }
 }
 
-pub fn load_default_jregistry() -> anyhow::Result<FabuildJRegistry> {
-    Ok(FabuildJRegistry::new(
-        std::env::var("FABUILD_JREGISTRY")
-            .context("FABUILD_JREGISTRY has not been set")?
+pub fn load_default_jregistry() -> anyhow::Result<GrustleJRegistry> {
+    Ok(GrustleJRegistry::new(
+        std::env::var("GRUSTLE_JREGISTRY")
+            .context("GRUSTLE_JREGISTRY has not been set")?
             .into(),
     ))
 }

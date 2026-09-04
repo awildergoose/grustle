@@ -2,9 +2,9 @@ use std::path::Path;
 
 use anyhow::Context;
 
-use crate::project::FabuildProjectTree;
+use crate::project::GrustleProjectTree;
 
-pub fn preprocess_resource_file(tree: &FabuildProjectTree, path: &Path) -> anyhow::Result<Vec<u8>> {
+pub fn preprocess_resource_file(tree: &GrustleProjectTree, path: &Path) -> anyhow::Result<Vec<u8>> {
     let ext = path
         .extension()
         .ok_or_else(|| anyhow::anyhow!("resource doesn't have a file extension"))?

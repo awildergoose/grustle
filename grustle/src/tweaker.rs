@@ -4,8 +4,8 @@ use std::{
 };
 
 use crate::{
-    jregistry::FabuildJRegistry,
-    project::FabuildProject,
+    jregistry::GrustleJRegistry,
+    project::GrustleProject,
     util::{get_target_aw_folder, get_target_classtweakers_folder, get_target_qt_file},
 };
 
@@ -26,8 +26,8 @@ pub fn get_class_tweakers(root: &Path) -> anyhow::Result<Vec<(PathBuf, String)>>
 
 pub fn invoke_class_tweakers(
     root: &Path,
-    project: &FabuildProject,
-    jregistry: &FabuildJRegistry,
+    project: &GrustleProject,
+    jregistry: &GrustleJRegistry,
 ) -> anyhow::Result<()> {
     let game_version = project
         .dependencies

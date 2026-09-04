@@ -56,7 +56,7 @@ try:
 except Exception:
     pass
 
-with open(f"../registry/minecraft/{game_version}/fabuild.toml", "w") as f:
+with open(f"../registry/minecraft/{game_version}/grustle.toml", "w") as f:
     f.write(out)
 
 
@@ -77,5 +77,5 @@ try:
 except Exception:
     pass
 
-with open(f"../registry/minecraft-client/{game_version}/fabuild.toml", "w") as f:
+with open(f"../registry/minecraft-client/{game_version}/grustle.toml", "w") as f:
     f.write(out)

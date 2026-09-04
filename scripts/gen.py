@@ -32,6 +32,6 @@ arm64 = []
 
 """
     
-    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "w") as f:
+    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "w") as f:
         f.write(toml)
         f.close()

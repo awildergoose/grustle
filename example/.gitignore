@@ -1,7 +1,7 @@
 /run
 
-# Fabuild
-/fabuild.lock
+# Grustle
+/grustle.lock
 /target
 
 # IDE specific

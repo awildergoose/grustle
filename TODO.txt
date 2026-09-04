@@ -1,4 +1,4 @@
-- [x] per-version fabuild.toml files
+- [x] per-version grustle.toml files
 - [x] embedded jar support (shadowJar but better)
 - [x] full class tweaker support
 - [x] clean up the target folder by structuring it better
@@ -14,9 +14,10 @@
 - [x] datagen support
 - [x] vineflower caching (cachyflower)
 - [x] copy datagenned resources to the classes folder
+- [ ] make cachyflower (un)zip the caches instead of wasting precious I/O time
 - [ ] proper phase detection (e.g. check if we've created AWs yet in `build`)
 - [ ] improve the registry system by specifying download locations
-- [ ] allow fabuild to download dependencies
+- [ ] allow grustle to download dependencies
 - [ ] multi-version and multi-loader support (stonecutter-like preprocessor)
 - [ ] neoforge support
 - [ ] (way future goal) obf support + parchment mappings

@@ -25,7 +25,7 @@ for line in reg:
 
     for jar in jars:
         src = jar
-        dst = f"G:/steve/.fabuild/{javaPath}/{pkgName}/{pkgVersion}"
+        dst = f"G:/steve/.grustle/{javaPath}/{pkgName}/{pkgVersion}"
         
         try:
             os.makedirs(dst)
@@ -67,7 +67,7 @@ for line in reg:
 
         runtimeJars.append(jar)
 
-    f = open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "r")
+    f = open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "r")
     data = toml.loads(f.read())
     f.close()
     data["version"]["runtime"] = runtimeJars
@@ -76,7 +76,7 @@ for line in reg:
     data["version"]["natives"]["x86"] = nativesX86Jars
     data["version"]["natives"]["arm64"] = nativesArm64Jars
 
-    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "w") as f:
+    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "w") as f:
         out = toml.dumps(data)
         
         # Prettify

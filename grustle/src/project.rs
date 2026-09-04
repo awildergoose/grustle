@@ -4,14 +4,14 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    jregistry::FabuildJRegistry,
-    registry::FabuildRegistry,
+    jregistry::GrustleJRegistry,
+    registry::GrustleRegistry,
     util::{SystemArchitecture, get_target_classes_folder},
 };
 
 // Spaghetti
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FabuildPackage {
+pub struct GrustlePackage {
     pub name: String,
     pub path: String,
     #[serde(default)]
@@ -19,22 +19,22 @@ pub struct FabuildPackage {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct FabuildPackageVersionNatives {
+pub struct GrustlePackageVersionNatives {
     pub x86: Vec<String>,
     pub x64: Vec<String>,
     pub arm64: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct FabuildPackageVersion {
+pub struct GrustlePackageVersion {
     pub runtime: Vec<String>,
     pub sources: Vec<String>,
     #[serde(default)]
-    pub natives: FabuildPackageVersionNatives,
+    pub natives: GrustlePackageVersionNatives,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FabuildDependency {
+pub struct GrustleDependency {
     pub version: String,
     #[serde(default)]
     pub embedded: bool,
@@ -44,16 +44,16 @@ pub struct FabuildDependency {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(untagged)]
-pub enum FabuildSeDependency {
+pub enum GrustleSeDependency {
     Versioned(String),
-    Full(FabuildDependency),
+    Full(GrustleDependency),
 }
 
-impl FabuildSeDependency {
+impl GrustleSeDependency {
     #[must_use]
-    pub fn resolve(&self) -> FabuildDependency {
+    pub fn resolve(&self) -> GrustleDependency {
         match self {
-            Self::Versioned(v) => FabuildDependency {
+            Self::Versioned(v) => GrustleDependency {
                 version: v.clone(),
                 embedded: false,
                 location: String::new(),
@@ -64,24 +64,24 @@ impl FabuildSeDependency {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FabuildSeProject {
-    pub package: FabuildPackage,
-    pub dependencies: HashMap<String, FabuildSeDependency>,
-    pub version: FabuildPackageVersion,
+pub struct GrustleSeProject {
+    pub package: GrustlePackage,
+    pub dependencies: HashMap<String, GrustleSeDependency>,
+    pub version: GrustlePackageVersion,
     #[serde(default)]
     pub extra: HashMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FabuildProject {
-    pub package: FabuildPackage,
-    pub dependencies: HashMap<String, FabuildDependency>,
-    pub version: FabuildPackageVersion,
+pub struct GrustleProject {
+    pub package: GrustlePackage,
+    pub dependencies: HashMap<String, GrustleDependency>,
+    pub version: GrustlePackageVersion,
     #[serde(default)]
     pub extra: HashMap<String, String>,
 }
 
-impl FabuildProject {
+impl GrustleProject {
     #[must_use]
     pub fn get_full_name(&self) -> String {
         if self.package.path.is_empty() {
@@ -93,14 +93,14 @@ impl FabuildProject {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FabuildResolvedProject {
-    pub package: FabuildPackage,
-    pub dependencies: HashMap<String, FabuildDependency>,
-    pub version: FabuildPackageVersion,
+pub struct GrustleResolvedProject {
+    pub package: GrustlePackage,
+    pub dependencies: HashMap<String, GrustleDependency>,
+    pub version: GrustlePackageVersion,
     pub ver: String,
 }
 
-impl FabuildResolvedProject {
+impl GrustleResolvedProject {
     #[must_use]
     pub fn get_full_name(&self) -> String {
         if self.package.path.is_empty() {
@@ -112,9 +112,9 @@ impl FabuildResolvedProject {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FabuildProjectTree {
-    pub root: FabuildProject,
-    pub packages: Vec<FabuildResolvedProject>,
+pub struct GrustleProjectTree {
+    pub root: GrustleProject,
+    pub packages: Vec<GrustleResolvedProject>,
 }
 
 pub struct ClasspathEntry {
@@ -122,12 +122,12 @@ pub struct ClasspathEntry {
     pub sources: Vec<String>,
 }
 
-impl FabuildProjectTree {
+impl GrustleProjectTree {
     /// Returns (Vec<Classpath>, Vec<Sourcepath>)
     pub fn gather_classpath(
         &self,
         root: &Path,
-        jregistry: &FabuildJRegistry,
+        jregistry: &GrustleJRegistry,
         architecture: SystemArchitecture,
         should_resolve_root: bool,
         include_natives: bool,
@@ -204,11 +204,11 @@ impl FabuildProjectTree {
     }
 }
 
-pub fn parse_project(text: &str) -> anyhow::Result<FabuildProject> {
-    let parsed = toml::from_str::<FabuildSeProject>(text)
-        .map_err(|e| anyhow::anyhow!(format!("Failed to parse Fabuild project: {e:#?}")))?;
+pub fn parse_project(text: &str) -> anyhow::Result<GrustleProject> {
+    let parsed = toml::from_str::<GrustleSeProject>(text)
+        .map_err(|e| anyhow::anyhow!(format!("Failed to parse Grustle project: {e:#?}")))?;
 
-    let project = FabuildProject {
+    let project = GrustleProject {
         package: parsed.package,
         version: parsed.version,
         dependencies: parsed
@@ -222,23 +222,23 @@ pub fn parse_project(text: &str) -> anyhow::Result<FabuildProject> {
     Ok(project)
 }
 
-pub fn load_root_project(root: &Path) -> anyhow::Result<FabuildProject> {
-    parse_project(&std::fs::read_to_string(root.join("fabuild.toml")).context(
-        "loading the root project failed, did you point to a folder without a fabuild project?",
+pub fn load_root_project(root: &Path) -> anyhow::Result<GrustleProject> {
+    parse_project(&std::fs::read_to_string(root.join("grustle.toml")).context(
+        "loading the root project failed, did you point to a folder without a Grustle project?",
     )?)
 }
 
-/// Loads the project and its dependencies into a `FabuildProjectTree`.
+/// Loads the project and its dependencies into a `GrustleProjectTree`.
 /// This is expected to be called on the *root* project only.
 pub fn load_project_tree(
     root: &Path,
-    project: &FabuildProject,
-    registry: &FabuildRegistry,
-) -> anyhow::Result<FabuildProjectTree> {
+    project: &GrustleProject,
+    registry: &GrustleRegistry,
+) -> anyhow::Result<GrustleProjectTree> {
     fn resolve_dependencies(
-        packages: &mut Vec<FabuildResolvedProject>,
-        package: &FabuildProject,
-        registry: &FabuildRegistry,
+        packages: &mut Vec<GrustleResolvedProject>,
+        package: &GrustleProject,
+        registry: &GrustleRegistry,
     ) -> anyhow::Result<()> {
         let parent_name = format!("{}.{}", package.package.path, package.package.name);
 
@@ -262,7 +262,7 @@ pub fn load_project_tree(
             let p = parse_project(&registry.resolve_package(dependency_name, &dependency.version)?)
                 .context(format!("loading {dependency_name}"))?;
             resolve_dependencies(packages, &p, registry)?;
-            let resolved = FabuildResolvedProject {
+            let resolved = GrustleResolvedProject {
                 package: p.package,
                 dependencies: p.dependencies,
                 version: p.version,
@@ -274,31 +274,30 @@ pub fn load_project_tree(
         Ok(())
     }
 
-    let current_toml = std::fs::read_to_string(root.join("fabuild.toml"))
-        .context("reading fabuild.toml to evaluate lock validity")?;
+    let current_toml = std::fs::read_to_string(root.join("grustle.toml"))
+        .context("reading grustle.toml to evaluate lock validity")?;
 
-    if std::fs::exists(root.join("fabuild.lock")).is_ok_and(|s| s) {
-        let content = std::fs::read_to_string(root.join("fabuild.lock"))?;
+    if std::fs::exists(root.join("grustle.lock")).is_ok_and(|s| s) {
+        let content = std::fs::read_to_string(root.join("grustle.lock"))?;
         let split: Vec<&str> = content.split('\n').collect();
 
         anyhow::ensure!(
             split
                 .first()
-                .is_some_and(|s| *s == "# This file is automatically @generated by Fabuild."),
-            "Fabuild header is missing!"
+                .is_some_and(|s| *s == "# This file is automatically @generated by Grustle."),
+            "Grustle header is missing!"
         );
         anyhow::ensure!(
             split
                 .get(1)
                 .is_some_and(|s| *s == "# It is not intended for manual editing."),
-            "Fabuild header is missing!"
+            "Grustle header is missing!"
         );
         anyhow::ensure!(
             split.get(2).is_some_and(|s| s.starts_with("# ")),
-            "Fabuild header is missing!"
+            "Grustle header is missing!"
         );
 
-        // TODO: get the hash of the fabuild.toml not the fabuild.lock lol
         let checksum = split.get(2).ok_or_else(|| unreachable!())?[2..].to_owned();
         let expected = format!("{:#X}", crc32fast::hash(&current_toml.clone().into_bytes()));
 
@@ -317,17 +316,17 @@ pub fn load_project_tree(
 
     resolve_dependencies(&mut packages, project, registry)?;
 
-    let tree = FabuildProjectTree {
+    let tree = GrustleProjectTree {
         root: project.clone(),
         packages,
     };
 
     let content = format!(
-        "# This file is automatically @generated by Fabuild.\n# It is not intended for manual editing.\n# {:#X}\n{}",
+        "# This file is automatically @generated by Grustle.\n# It is not intended for manual editing.\n# {:#X}\n{}",
         crc32fast::hash(&current_toml.into_bytes()),
         toml::to_string(&tree)?
     );
-    std::fs::write(root.join("fabuild.lock"), content)?;
+    std::fs::write(root.join("grustle.lock"), content)?;
 
     Ok(tree)
 }

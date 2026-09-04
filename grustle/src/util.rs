@@ -4,8 +4,8 @@ use std::{
 };
 
 use crate::{
-    jregistry::FabuildJRegistry,
-    project::{FabuildProject, FabuildProjectTree},
+    jregistry::GrustleJRegistry,
+    project::{GrustleProject, GrustleProjectTree},
 };
 use anyhow::Context;
 
@@ -112,8 +112,8 @@ pub fn generate_log4j_config(root: &Path) -> anyhow::Result<()> {
 
 pub fn generate_launch_config(
     root: &Path,
-    jregistry: &FabuildJRegistry,
-    project: &FabuildProject,
+    jregistry: &GrustleJRegistry,
+    project: &GrustleProject,
 ) -> anyhow::Result<()> {
     let launch = get_target_launch_folder(root);
 
@@ -155,8 +155,8 @@ clientProperties
             .canonicalize()?
             .display(), // fabric.gameJarPath
         get_target_classes_folder(root).canonicalize()?.display(), // fabric.classPathGroups
-        std::env::var("FABUILD_ASSETS_DIRECTORY")
-            .context("FABUILD_ASSETS_DIRECTORY is not set!")?, // assetsDir
+        std::env::var("GRUSTLE_ASSETS_DIRECTORY")
+            .context("GRUSTLE_ASSETS_DIRECTORY is not set!")?, // assetsDir
         jregistry
             .resolve_file(
                 root,
@@ -176,8 +176,8 @@ clientProperties
 
 pub fn generate_client_classpath(
     root: &Path,
-    jregistry: &FabuildJRegistry,
-    tree: &FabuildProjectTree,
+    jregistry: &GrustleJRegistry,
+    tree: &GrustleProjectTree,
 ) -> anyhow::Result<()> {
     std::fs::create_dir_all(get_target_classes_folder(root))?;
     let entries = tree.gather_classpath(
@@ -195,8 +195,8 @@ pub fn generate_client_classpath(
 
 pub fn generate_common_classpath(
     root: &Path,
-    jregistry: &FabuildJRegistry,
-    tree: &FabuildProjectTree,
+    jregistry: &GrustleJRegistry,
+    tree: &GrustleProjectTree,
 ) -> anyhow::Result<()> {
     std::fs::create_dir_all(get_target_classes_folder(root))?;
     let game_client_version = tree

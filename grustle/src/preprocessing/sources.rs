@@ -4,7 +4,7 @@ use std::path::Path;
 
 use anyhow::Context;
 
-use crate::project::FabuildProjectTree;
+use crate::project::GrustleProjectTree;
 
 pub fn is_positive(text: &str) -> anyhow::Result<bool> {
     if text == "0" || text == "false" {
@@ -19,7 +19,7 @@ pub fn is_positive(text: &str) -> anyhow::Result<bool> {
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn preprocess_source_file(tree: &FabuildProjectTree, path: &Path) -> anyhow::Result<String> {
+pub fn preprocess_source_file(tree: &GrustleProjectTree, path: &Path) -> anyhow::Result<String> {
     let filename = path
         .file_name()
         .ok_or_else(|| anyhow::anyhow!("filename is non UTF-8"))?
@@ -33,7 +33,7 @@ pub fn preprocess_source_file(tree: &FabuildProjectTree, path: &Path) -> anyhow:
     let mut passed_conditional_block = false;
 
     let mut defines = HashMap::new();
-    defines.insert("FABUILD".to_owned(), "true".to_owned());
+    defines.insert("GRUSTLE".to_owned(), "true".to_owned());
 
     for (line_index, line) in content
         .split('\n')

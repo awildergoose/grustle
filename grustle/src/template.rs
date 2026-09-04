@@ -1,7 +1,7 @@
 pub const GITIGNORE: &str = r"/run
 
-# Fabuild
-/fabuild.lock
+# Grustle
+/grustle.lock
 /target
 
 # IDE specific
@@ -13,7 +13,7 @@ pub const GITIGNORE: &str = r"/run
 // com.azure.azure-json
 // name = "azure-json"
 // path = "com.azure"
-pub const FABUILD_TOML: &str = r#"[package]
+pub const GRUSTLE_TOML: &str = r#"[package]
 name = "{identifier}"
 path = "{namespace}"
 ver = "1.0.0"

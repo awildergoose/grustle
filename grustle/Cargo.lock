@@ -283,23 +283,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fabuild"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "arg",
- "bhc-diagnostics",
- "bhc-span",
- "crc32fast",
- "lenient_semver",
- "regex",
- "richrs",
- "serde",
- "toml",
- "zip",
-]
-
-[[package]]
 name = "find-msvc-tools"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -350,6 +333,23 @@ dependencies = [
  "libc",
  "r-efi",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "grustle"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "arg",
+ "bhc-diagnostics",
+ "bhc-span",
+ "crc32fast",
+ "lenient_semver",
+ "regex",
+ "richrs",
+ "serde",
+ "toml",
+ "zip",
 ]
 
 [[package]]

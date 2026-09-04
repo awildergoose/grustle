@@ -125,11 +125,11 @@ for line in reg:
                                     print(f"{"="*50} odd version: {version} ({groupId}.{artifactId})")
                         dps[f"{groupId}.{artifactId}"] = version
     
-    f = open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "r")
+    f = open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "r")
     data = toml.loads(f.read())
     f.close()
     data["dependencies"] = dps
 
-    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/fabuild.toml", "w") as f:
+    with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "w") as f:
         f.write(toml.dumps(data))
 

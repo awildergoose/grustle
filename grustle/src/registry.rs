@@ -3,11 +3,11 @@ use std::path::PathBuf;
 use anyhow::Context;
 
 /// The Registry contains references to the package metadata files.
-pub struct FabuildRegistry {
+pub struct GrustleRegistry {
     pub root: PathBuf,
 }
 
-impl FabuildRegistry {
+impl GrustleRegistry {
     #[must_use]
     pub const fn new(root: PathBuf) -> Self {
         Self { root }
@@ -32,13 +32,13 @@ impl FabuildRegistry {
     }
 
     pub fn resolve_package(&self, name: &str, version: &str) -> anyhow::Result<String> {
-        let path = self.resolve_path(name, version)?.join("fabuild.toml");
+        let path = self.resolve_path(name, version)?.join("grustle.toml");
         std::fs::read_to_string(&path)
             .context(format!("resolving package {name} to {}", path.display()))
     }
 }
 
 #[must_use]
-pub fn load_default_registry() -> FabuildRegistry {
-    FabuildRegistry::new("../registry/".into())
+pub fn load_default_registry() -> GrustleRegistry {
+    GrustleRegistry::new("../registry/".into())
 }
