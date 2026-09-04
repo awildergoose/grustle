@@ -6,13 +6,16 @@ use anyhow::Context;
 
 use crate::project::FabuildProjectTree;
 
-#[must_use]
-pub fn is_positive(text: &str) -> bool {
+pub fn is_positive(text: &str) -> anyhow::Result<bool> {
     if text == "0" || text == "false" {
-        return false;
+        return Ok(false);
     }
 
-    true
+    if text == "1" || text == "true" {
+        return Ok(true);
+    }
+
+    anyhow::bail!("boolean value is not valid: '{text}'")
 }
 
 #[allow(clippy::too_many_lines)]
@@ -140,7 +143,7 @@ pub fn preprocess_source_file(tree: &FabuildProjectTree, path: &Path) -> anyhow:
                     let key = expect_next!();
 
                     if !defines.contains_key(&key)
-                        || !is_positive(defines.get(&key).ok_or_else(|| unreachable!())?)
+                        || !is_positive(defines.get(&key).ok_or_else(|| unreachable!())?)?
                     {
                         can_emit -= 1;
                         inside_conditional_block = true;

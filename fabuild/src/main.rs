@@ -17,15 +17,20 @@ use arg::Args;
 
 use crate::util::SystemArchitecture;
 
+#[cfg(debug_assertions)]
+const ROOT: &str = "../example";
+#[cfg(not(debug_assertions))]
+const ROOT: &str = "./";
+
 #[derive(Args, Debug)]
 pub struct ProgramEmptySubCommand {
-    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
+    #[arg(long, default_value = "PathBuf::from(ROOT)")]
     pub root: PathBuf,
 }
 
 #[derive(Args, Debug)]
 pub struct ProgramNewSubCommand {
-    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
+    #[arg(long, default_value = "PathBuf::from(ROOT)")]
     pub root: PathBuf,
 
     #[arg(short, long, required)]
@@ -47,7 +52,7 @@ pub struct ProgramNewSubCommand {
 
 #[derive(Args, Debug)]
 pub struct ProgramRunSubCommand {
-    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
+    #[arg(long, default_value = "PathBuf::from(ROOT)")]
     pub root: PathBuf,
     #[arg(long)]
     pub server: bool,
@@ -57,7 +62,7 @@ pub struct ProgramRunSubCommand {
 
 #[derive(Args, Debug)]
 pub struct ProgramSourcesSubCommand {
-    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
+    #[arg(long, default_value = "PathBuf::from(ROOT)")]
     pub root: PathBuf,
     #[arg(
         long,
@@ -68,7 +73,7 @@ pub struct ProgramSourcesSubCommand {
 
 #[derive(Args, Debug)]
 pub struct ProgramClasspathArgs {
-    #[arg(long, default_value = "PathBuf::from(\"../example\")")]
+    #[arg(long, default_value = "PathBuf::from(ROOT)")]
     pub root: PathBuf,
     #[arg(short, long, default_value = "false")]
     pub sources: bool,
@@ -94,7 +99,7 @@ struct ProgramArgs {
     cmd: ProgramSubCommand,
 }
 
-fn fake_main() -> anyhow::Result<()> {
+fn real_main() -> anyhow::Result<()> {
     // TODO: improve this
     let binding = std::env::args().skip(1).collect::<Vec<String>>();
     let args = binding
@@ -117,12 +122,27 @@ fn fake_main() -> anyhow::Result<()> {
 }
 
 fn main() -> anyhow::Result<()> {
-    let result = fake_main();
+    let result = real_main();
 
     if let Err(ref e) = result {
         let mut con = richrs::console::Console::new();
 
-        con.print(&format!("[red]error[white]: {e}"))?;
+        let mut text = richrs::text::Text::assemble([
+            (
+                "error",
+                Some(richrs::style::Style::color(richrs::color::Color::Standard(
+                    richrs::color::StandardColor::Red,
+                ))),
+            ),
+            (
+                ": ",
+                Some(richrs::style::Style::color(richrs::color::Color::Standard(
+                    richrs::color::StandardColor::White,
+                ))),
+            ),
+        ]);
+        text.append_plain(&format!("{e}"));
+        con.print_text(&text)?;
 
         if cfg!(debug_assertions) {
             let backtrace_status = e.backtrace().status();
