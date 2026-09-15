@@ -3,6 +3,9 @@ name = "minecraft"
 path = ""
 ver = "26.2"
 
+[extra]
+assetIndex = "32"
+
 [dependencies]
 "at.yawk.lz4.lz4-java" = "1.10.1"
 "com.azure.azure-json" = "1.4.0"

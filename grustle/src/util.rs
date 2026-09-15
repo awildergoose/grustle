@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     jregistry::GrustleJRegistry,
-    project::{GrustleProject, GrustleProjectTree},
+    project::{GrustleProjectTree},
 };
 use anyhow::Context;
 
@@ -114,24 +114,24 @@ pub fn generate_launch_config(
     root: &Path,
     profile: &str,
     jregistry: &GrustleJRegistry,
-    project: &GrustleProject,
+    tree: &GrustleProjectTree
 ) -> anyhow::Result<()> {
     let launch = get_target_launch_folder(root, profile);
 
-    let game_version = project
-        .dependencies
-        .get("minecraft")
-        .ok_or_else(|| anyhow::anyhow!("minecraft is not in the dependency list!"))?
-        .version
+    // TODO: make sure this resolve to the ROOT project's minecraft dependency!
+    let minecraft = tree.packages.iter().find(|p| p.get_full_name() == "minecraft").ok_or_else(|| anyhow::anyhow!("minecraft is not in the dependency list!"))?;
+    let game_version = minecraft
+        .ver
         .clone();
-    let game_client_version = project
+    let game_client_version = tree.root
         .dependencies
         .get("minecraft-client")
         .ok_or_else(|| anyhow::anyhow!("minecraft-client is not in the dependency list!"))?
         .version
         .clone();
 
-    // TODO: assetIndex here is always 32
+    let asset_index = minecraft.extra.get("assetIndex").ok_or_else(|| anyhow::anyhow!("minecraft package doesn't have the assetIndex extra set?"))?;
+
     let launch_cfg = format!(
         r"commonProperties
 	fabric.development=true
@@ -144,7 +144,7 @@ pub fn generate_launch_config(
 	fabric.log.disableAnsi=false
 clientArgs
 	--assetIndex
-	{game_version}-32
+	{game_version}-{asset_index}
 	--assetsDir
 	{}
 clientProperties

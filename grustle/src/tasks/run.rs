@@ -35,7 +35,7 @@ pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
 
     generate_client_classpath(root, profile, &jregistry, &tree)?;
     generate_log4j_config(root, profile)?;
-    generate_launch_config(root, profile, &jregistry, &project)?;
+    generate_launch_config(root, profile, &jregistry, &tree)?;
 
     let mut binding = Command::new("java");
     let mut command = binding

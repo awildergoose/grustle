@@ -2,14 +2,14 @@ import json
 import os
 
 CURRENT_OS = "windows" # windows, linux, osx
-game_version = "26.2"
+game_version = "1.21.8"
 dependencies = ""
 
 def put_dependency(name: str, version: str):
     global dependencies
     dependencies += f"\"{name}\" = \"{version}\"\n"
 
-data = json.load(open("26.2.json"))
+data = json.load(open(f"{game_version}.json"))
 dps = {}
 
 for lib in data["libraries"]:
@@ -37,11 +37,15 @@ for d in dps:
     put_dependency(d, dps[d])
 
 dependencies = dependencies.strip()
+asset_index = data["assets"]
 
 out = f"""[package]
 name = "minecraft"
 path = ""
 ver = "{game_version}"
+
+[extra]
+assetIndex = "{asset_index}"
 
 [dependencies]
 {dependencies}

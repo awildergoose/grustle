@@ -98,6 +98,8 @@ pub struct GrustleResolvedProject {
     pub dependencies: HashMap<String, GrustleDependency>,
     pub version: GrustlePackageVersion,
     pub ver: String,
+    #[serde(default)]
+    pub extra: HashMap<String, String>,
 }
 
 impl GrustleResolvedProject {
@@ -270,6 +272,7 @@ pub fn load_project_tree(
                 package: p.package,
                 dependencies: p.dependencies,
                 version: p.version,
+                extra: p.extra.clone(),
                 ver: dependency.version.clone(),
             };
             packages.push(resolved);

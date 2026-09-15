@@ -2,11 +2,16 @@ import os
 import xmltodict
 import toml
 
-reg = open("registry.txt", "r").readlines()
+reg = open("registry2.txt", "r").readlines()
 
 FILES = "F:\\Other\\steve\\.gradle\\caches\\modules-2\\files-2.1\\"
 
 for line in reg:
+    line = line.strip()
+    if line.endswith("mappings.jar"):
+        continue
+    if "\\remapped\\" in line:
+        continue
     line = line.split(FILES)[1].strip()
     javaPath = line.split("\\")[0]
     pkgName = line.split("\\")[1]
@@ -47,6 +52,7 @@ for line in reg:
                         version = dep.get("version")
                         
                         # I HATE EVERYTHING
+                        # https://github.com/aquasecurity/trivy/discussions/7231#discussioncomment-13957914
                         if fullName == "net.fabricmc.fabric-api.fabric-api-deprecated":
                             continue
                         elif fullName == "org.mockito.mockito-core":
@@ -71,7 +77,10 @@ for line in reg:
                             continue
                         elif fullName == "com.google.code.findbugs.jsr305":
                             continue
+                        elif fullName == "org.checkerframework.checker-qual":
+                            continue
 
+                        # This is 26.1 specific...
                         if fullName == "commons-codec.commons-codec":
                             version = "1.22.0"
                         if fullName == "commons-io.commons-io":
@@ -88,18 +97,31 @@ for line in reg:
                             version = "33.6.0-jre"
                         elif fullName == "it.unimi.dsi.fastutil":
                             version = "8.5.18"
+                        # elif fullName == "org.ow2.asm.asm-tree":
+                        #     version = "9.10.1"
+                        # elif fullName == "org.ow2.asm.asm-commons":
+                        #     version = "9.10.1"
+                        # elif fullName == "org.ow2.asm.asm-util":
+                        #     version = "9.10.1"
+                        elif fullName == "org.ow2.asm.asm":
+                            version = "9.8"
                         elif fullName == "org.ow2.asm.asm-tree":
-                            version = "9.10.1"
+                            version = "9.8"
                         elif fullName == "org.ow2.asm.asm-commons":
-                            version = "9.10.1"
+                            version = "9.8"
                         elif fullName == "org.ow2.asm.asm-util":
-                            version = "9.10.1"
+                            version = "9.8"
 
                         if not version:
                             # this sucks
                             print(f"guessing latest version for {groupId}.{artifactId} ({javaPath}.{pkgName})")
 
                             for line2 in reg:
+                                line2 = line2.strip()
+                                if line2.endswith("mappings.jar"):
+                                    continue
+                                if "\\remapped\\" in line2:
+                                    continue
                                 line2 = line2.split(FILES)[1].strip()
                                 javaPath2 = line2.split("\\")[0]
                                 pkgName2 = line2.split("\\")[1]
@@ -110,7 +132,7 @@ for line in reg:
                                     version = pkgVersion2
                                     break
                             if not version:
-                                raise RuntimeError(f"failed to guess version for {groupId}.{artifactId}") 
+                                raise RuntimeError(f"failed to guess version for {groupId}.{artifactId} ({pomPath})") 
 
                         if "$" in version:
                             if version == "${project.version}":
