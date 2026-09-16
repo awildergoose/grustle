@@ -1,11 +1,11 @@
 [package]
 name = "fabric-api"
-path = ""
-ver = "0.155.2+26.2"
+group = ""
+version = "0.155.2+26.2"
 
 [dependencies]
 "net.fabricmc.fabric-api.fabric-api" = "0.155.2+26.2"
 
-[version]
+[artifact]
 runtime = []
 sources = []

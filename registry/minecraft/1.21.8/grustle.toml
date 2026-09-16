@@ -67,6 +67,6 @@ assetIndex = "26"
 "org.ow2.asm.asm" = "9.6"
 "org.slf4j.slf4j-api" = "2.0.16"
 
-[version]
+[artifact]
 runtime = ["minecraft.jar"]
 sources = ["minecraft-sources.jar"]

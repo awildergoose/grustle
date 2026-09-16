@@ -1,6 +1,6 @@
 import os
 
-reg = open("registry2.txt", "r").readlines()
+reg = open("registry.txt", "r").readlines()
 
 FILES = "F:\\Other\\steve\\.gradle\\caches\\modules-2\\files-2.1\\"
 
@@ -18,8 +18,8 @@ for line in reg:
 
     with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "r") as f:
         content = f.read()
-    
-    content = content.replace(f"""[version.natives]
+
+    content = content.replace(f"""[artifact.natives]
 x64 = []
 x86 = []
 arm64 = []

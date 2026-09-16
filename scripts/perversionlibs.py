@@ -1,13 +1,15 @@
 import json
 import os
 
-CURRENT_OS = "windows" # windows, linux, osx
-game_version = "1.21.8"
+CURRENT_OS = "windows"  # windows, linux, osx
+game_version = "26.2"
 dependencies = ""
+
 
 def put_dependency(name: str, version: str):
     global dependencies
     dependencies += f"\"{name}\" = \"{version}\"\n"
+
 
 data = json.load(open(f"{game_version}.json"))
 dps = {}
@@ -17,20 +19,20 @@ for lib in data["libraries"]:
     rules = lib.get("rules")
 
     if rules:
-        for rule in rules: 
+        for rule in rules:
             # only action type is allow right now lol
             if rule.get("os") and rule.get("os").get("name") != CURRENT_OS:
                 passes = False
                 break
             elif not rule.get("os") or not rule.get("os").get("name"):
                 raise RuntimeError(f"unknown rule: {rule}")
-    
+
     if passes:
         name = lib["name"]
         split = name.split(":")
         resolved = f"{split[0]}.{split[1]}"
         version = split[2]
-        
+
         dps[resolved] = version
 
 for d in dps:
@@ -41,8 +43,8 @@ asset_index = data["assets"]
 
 out = f"""[package]
 name = "minecraft"
-path = ""
-ver = "{game_version}"
+group = ""
+version = "{game_version}"
 
 [extra]
 assetIndex = "{asset_index}"
@@ -50,7 +52,7 @@ assetIndex = "{asset_index}"
 [dependencies]
 {dependencies}
 
-[version]
+[artifact]
 runtime = [\"minecraft.jar\"]
 sources = [\"minecraft-sources.jar\"]
 """
@@ -66,12 +68,13 @@ with open(f"../registry/minecraft/{game_version}/grustle.toml", "w") as f:
 
 out = f"""[package]
 name = "minecraft-client"
-path = ""
+group = ""
+version = "{game_version}"
 
 [dependencies]
 {dependencies}
 
-[version]
+[artifact]
 runtime = [\"minecraft-client.jar\"]
 sources = [\"minecraft-client-sources.jar\"]
 """

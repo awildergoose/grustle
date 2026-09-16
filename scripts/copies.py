@@ -2,7 +2,7 @@ import os
 import toml
 import shutil
 
-reg = open("registry2.txt", "r").readlines()
+reg = open("registry.txt", "r").readlines()
 
 FILES = "F:\\Other\\steve\\.gradle\\caches\\modules-2\\files-2.1\\"
 
@@ -17,7 +17,7 @@ for line in reg:
     pkgName = line.split("\\")[1]
     pkgVersion = line.split("\\")[2]
     filename = line.split("\\")[4]
-    
+
     # find the jars
     path = f"{FILES}\\{javaPath}\\{pkgName}\\{pkgVersion}"
     jars = []
@@ -27,11 +27,10 @@ for line in reg:
             if file.endswith(".jar"):
                 jars.append(f"{path}\\{folder}\\{file}")
 
-
     for jar in jars:
         src = jar
         dst = f"G:/steve/.grustle/{javaPath}/{pkgName}/{pkgVersion}"
-        
+
         try:
             os.makedirs(dst)
         except Exception:
@@ -42,19 +41,19 @@ for line in reg:
         # print(f"src: {src}, dst: {dst}")
         shutil.copyfile(src, dst)
         # break
-    
+
     allJars = []
-    
+
     runtimeJars = []
     sourcesJars = []
-    
+
     nativesX64Jars = []
     nativesX86Jars = []
     nativesArm64Jars = []
 
     for jar in jars:
         allJars.append(jar.split("\\")[-1])
-    
+
     for jar in allJars:
         if jar.endswith("-sources.jar"):
             sourcesJars.append(jar)
@@ -62,7 +61,7 @@ for line in reg:
         if "-natives-" in jar:
             if "arm64" in jar:
                 nativesArm64Jars.append(jar)
-            elif "x86" in jar or "jtracy" in jar: # special case for com.mojang.jtracy
+            elif "x86" in jar or "jtracy" in jar:  # special case for com.mojang.jtracy
                 nativesX86Jars.append(jar)
             else:
                 nativesX64Jars.append(jar)
@@ -72,19 +71,20 @@ for line in reg:
 
         runtimeJars.append(jar)
 
-    f = open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "r")
+    f = open(
+        f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "r")
     data = toml.loads(f.read())
     f.close()
-    data["version"]["runtime"] = runtimeJars
-    data["version"]["sources"] = sourcesJars
-    data["version"]["natives"]["x64"] = nativesX64Jars
-    data["version"]["natives"]["x86"] = nativesX86Jars
-    data["version"]["natives"]["arm64"] = nativesArm64Jars
+    data["artifact"]["runtime"] = runtimeJars
+    data["artifact"]["sources"] = sourcesJars
+    data["artifact"]["natives"]["x64"] = nativesX64Jars
+    data["artifact"]["natives"]["x86"] = nativesX86Jars
+    data["artifact"]["natives"]["arm64"] = nativesArm64Jars
 
     with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "w") as f:
         out = toml.dumps(data)
-        
+
         # Prettify
         out = out.replace("\",]\n", "\" ]\n")
-        
+
         f.write(out)

@@ -2,7 +2,7 @@ import os
 import xmltodict
 import toml
 
-reg = open("registry2.txt", "r").readlines()
+reg = open("registry.txt", "r").readlines()
 
 FILES = "F:\\Other\\steve\\.gradle\\caches\\modules-2\\files-2.1\\"
 
@@ -17,7 +17,7 @@ for line in reg:
     pkgName = line.split("\\")[1]
     pkgVersion = line.split("\\")[2]
     filename = line.split("\\")[4]
-    
+
     # find the pomFile
     path = f"{FILES}\\{javaPath}\\{pkgName}\\{pkgVersion}"
     pomPath = None
@@ -50,7 +50,7 @@ for line in reg:
                         fullName = f"{groupId}.{artifactId}"
 
                         version = dep.get("version")
-                        
+
                         # I HATE EVERYTHING
                         # https://github.com/aquasecurity/trivy/discussions/7231#discussioncomment-13957914
                         if fullName == "net.fabricmc.fabric-api.fabric-api-deprecated":
@@ -114,7 +114,8 @@ for line in reg:
 
                         if not version:
                             # this sucks
-                            print(f"guessing latest version for {groupId}.{artifactId} ({javaPath}.{pkgName})")
+                            print(
+                                f"guessing latest version for {groupId}.{artifactId} ({javaPath}.{pkgName})")
 
                             for line2 in reg:
                                 line2 = line2.strip()
@@ -132,11 +133,13 @@ for line in reg:
                                     version = pkgVersion2
                                     break
                             if not version:
-                                raise RuntimeError(f"failed to guess version for {groupId}.{artifactId} ({pomPath})") 
+                                raise RuntimeError(
+                                    f"failed to guess version for {groupId}.{artifactId} ({pomPath})")
 
                         if "$" in version:
                             if version == "${project.version}":
-                                version = parsed["project"].get("version") or parsed["project"]["parent"]["version"]
+                                version = parsed["project"].get(
+                                    "version") or parsed["project"]["parent"]["version"]
                             else:
                                 # i hate this
                                 if version == "${slf4j.version}":
@@ -144,14 +147,15 @@ for line in reg:
                                 elif version == "${failureaccess.version}":
                                     version = "1.0.3"
                                 else:
-                                    print(f"{"="*50} odd version: {version} ({groupId}.{artifactId})")
+                                    print(
+                                        f"{"="*50} odd version: {version} ({groupId}.{artifactId})")
                         dps[f"{groupId}.{artifactId}"] = version
-    
-    f = open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "r")
+
+    f = open(
+        f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "r")
     data = toml.loads(f.read())
     f.close()
     data["dependencies"] = dps
 
     with open(f"../registry/{javaPath}/{pkgName}/{pkgVersion}/grustle.toml", "w") as f:
         f.write(toml.dumps(data))
-

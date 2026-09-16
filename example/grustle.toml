@@ -1,7 +1,7 @@
 [package]
 name = "example"
-path = "com.example"
-ver = "1.0.0"
+group = "com.example"
+version = "1.0.0"
 
 [extra]
 display_name = "Template Mod"
@@ -13,6 +13,6 @@ minecraft = "26.2"
 minecraft-client = "26.2"
 test = { version = "1.0.0", embedded = true, location = "test" }
 
-[version]
+[artifact]
 runtime = ["example.jar"]
 sources = ["example-sources.jar"]

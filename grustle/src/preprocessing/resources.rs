@@ -26,8 +26,8 @@ pub fn preprocess_resource_file(tree: &GrustleProjectTree, path: &Path) -> anyho
     ))?;
 
     out = out.replace("${project.name}", &tree.root.package.name);
-    out = out.replace("${project.path}", &tree.root.package.path);
-    out = out.replace("${project.version}", &tree.root.package.ver);
+    out = out.replace("${project.path}", &tree.root.package.group);
+    out = out.replace("${project.version}", &tree.root.package.version);
 
     for (key, value) in &tree.root.extra {
         out = out.replace(&format!("${{project.extra.{key}}}"), value);

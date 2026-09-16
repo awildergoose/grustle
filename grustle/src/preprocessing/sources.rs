@@ -108,7 +108,7 @@ pub fn preprocess_source_file(
                     match function {
                         "version" => {
                             let package = args;
-                            let ver = tree.packages.iter().find(|p| p.get_full_name() == package).ok_or_else(|| anyhow::anyhow!("failed to find package {package} (from {filename}:L{line_number})"))?.package.ver.clone();
+                            let ver = tree.packages.iter().find(|p| p.get_full_name() == package).ok_or_else(|| anyhow::anyhow!("failed to find package {package} (from {filename}:L{line_number})"))?.package.version.clone();
                             let pkg_version = lenient_semver::parse(
                                 // I sure do hope this memory doesn't leak!
                                 // inconspicious memory leak:

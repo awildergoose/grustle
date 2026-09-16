@@ -13,9 +13,9 @@ use crate::{
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GrustlePackage {
     pub name: String,
-    pub path: String,
+    pub group: String,
     #[serde(default)]
-    pub ver: String,
+    pub version: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -26,7 +26,7 @@ pub struct GrustlePackageVersionNatives {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct GrustlePackageVersion {
+pub struct GrustlePackageArtifact {
     pub runtime: Vec<String>,
     pub sources: Vec<String>,
     #[serde(default)]
@@ -67,7 +67,7 @@ impl GrustleSeDependency {
 pub struct GrustleSeProject {
     pub package: GrustlePackage,
     pub dependencies: HashMap<String, GrustleSeDependency>,
-    pub version: GrustlePackageVersion,
+    pub artifact: GrustlePackageArtifact,
     #[serde(default)]
     pub extra: HashMap<String, String>,
 }
@@ -76,7 +76,7 @@ pub struct GrustleSeProject {
 pub struct GrustleProject {
     pub package: GrustlePackage,
     pub dependencies: HashMap<String, GrustleDependency>,
-    pub version: GrustlePackageVersion,
+    pub version: GrustlePackageArtifact,
     #[serde(default)]
     pub extra: HashMap<String, String>,
 }
@@ -84,11 +84,11 @@ pub struct GrustleProject {
 impl GrustleProject {
     #[must_use]
     pub fn get_full_name(&self) -> String {
-        if self.package.path.is_empty() {
+        if self.package.group.is_empty() {
             return self.package.name.clone();
         }
 
-        format!("{}.{}", self.package.path, self.package.name)
+        format!("{}.{}", self.package.group, self.package.name)
     }
 }
 
@@ -96,7 +96,7 @@ impl GrustleProject {
 pub struct GrustleResolvedProject {
     pub package: GrustlePackage,
     pub dependencies: HashMap<String, GrustleDependency>,
-    pub version: GrustlePackageVersion,
+    pub version: GrustlePackageArtifact,
     pub ver: String,
     #[serde(default)]
     pub extra: HashMap<String, String>,
@@ -105,11 +105,11 @@ pub struct GrustleResolvedProject {
 impl GrustleResolvedProject {
     #[must_use]
     pub fn get_full_name(&self) -> String {
-        if self.package.path.is_empty() {
+        if self.package.group.is_empty() {
             return self.package.name.clone();
         }
 
-        format!("{}.{}", self.package.path, self.package.name)
+        format!("{}.{}", self.package.group, self.package.name)
     }
 }
 
@@ -216,7 +216,7 @@ pub fn parse_project(text: &str) -> anyhow::Result<GrustleProject> {
 
     let project = GrustleProject {
         package: parsed.package,
-        version: parsed.version,
+        version: parsed.artifact,
         dependencies: parsed
             .dependencies
             .iter()
@@ -246,7 +246,7 @@ pub fn load_project_tree(
         package: &GrustleProject,
         registry: &GrustleRegistry,
     ) -> anyhow::Result<()> {
-        let parent_name = format!("{}.{}", package.package.path, package.package.name);
+        let parent_name = format!("{}.{}", package.package.group, package.package.name);
 
         if packages.iter().any(|p| p.get_full_name().eq(&parent_name)) {
             return Ok(());

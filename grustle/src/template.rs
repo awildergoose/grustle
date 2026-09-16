@@ -15,8 +15,8 @@ pub const GITIGNORE: &str = r"/run
 // path = "com.azure"
 pub const GRUSTLE_TOML: &str = r#"[package]
 name = "{identifier}"
-path = "{namespace}"
-ver = "1.0.0"
+group = "{namespace}"
+version = "1.0.0"
 
 [extra]
 display_name = "{display_name}"
@@ -27,7 +27,7 @@ fabric-api = "{fabric_api_version}+{minecraft_version}"
 minecraft = "{minecraft_version}"
 minecraft-client = "{minecraft_version}"
 
-[version]
+[artifact]
 runtime = ["{identifier}.jar"]
 sources = ["{identifier}-sources.jar"]
 "#;
