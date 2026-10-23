@@ -38,7 +38,10 @@ impl GrustleRegistry {
     }
 }
 
-#[must_use]
-pub fn load_default_registry() -> GrustleRegistry {
-    GrustleRegistry::new("../registry/".into())
+pub fn load_default_registry() -> anyhow::Result<GrustleRegistry> {
+    Ok(GrustleRegistry::new(
+        std::env::var("GRUSTLE_REGISTRY")
+            .context("GRUSTLE_REGISTRY has not been set")?
+            .into(),
+    ))
 }

@@ -5,9 +5,10 @@ use crate::{
     jregistry::load_default_jregistry,
     project::{load_project_tree, load_root_project},
     registry::load_default_registry,
-    util::SystemArchitecture,
+    util::{SystemArchitecture, normalize_windows_path},
 };
 
+// TODO: make this write the files required for a full IntelliJ project load
 pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let root = &args.root;
     let profile = args.profile();
@@ -28,7 +29,7 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     .to_string();
 
     let project = load_root_project(root)?;
-    let registry = load_default_registry();
+    let registry = load_default_registry()?;
     let jregistry = load_default_jregistry()?;
     let tree = load_project_tree(root, &project, &registry)?;
 
@@ -46,11 +47,19 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
         let mut sources = String::new();
 
         for class in &entry.classes {
-            write!(&mut classes, "<root url=\"jar://{class}!/\" />\n\t\t\t\t")?;
+            write!(
+                &mut classes,
+                "<root url=\"jar://{}!/\" />\n\t\t\t\t",
+                normalize_windows_path(class)
+            )?;
         }
 
         for source in &entry.sources {
-            write!(&mut sources, "<root url=\"jar://{source}!/\" />\n\t\t\t\t")?;
+            write!(
+                &mut sources,
+                "<root url=\"jar://{}!/\" />\n\t\t\t\t",
+                normalize_windows_path(source)
+            )?;
         }
 
         classes = classes.trim().to_owned();

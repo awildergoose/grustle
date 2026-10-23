@@ -3,10 +3,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::{
-    jregistry::GrustleJRegistry,
-    project::{GrustleProjectTree},
-};
+use crate::{jregistry::GrustleJRegistry, project::GrustleProjectTree};
 use anyhow::Context;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -46,6 +43,12 @@ impl SystemArchitecture {
         #[cfg(any(target_arch = "arm", target_arch = "arm64ec", target_arch = "aarch64"))]
         return Self::Arm64;
     }
+}
+
+// Some software doesn't like Windows' extended path format :(
+#[must_use]
+pub fn normalize_windows_path(path: &str) -> &str {
+    path.strip_prefix(r"\\?\").unwrap_or(path)
 }
 
 #[must_use]
@@ -114,23 +117,28 @@ pub fn generate_launch_config(
     root: &Path,
     profile: &str,
     jregistry: &GrustleJRegistry,
-    tree: &GrustleProjectTree
+    tree: &GrustleProjectTree,
 ) -> anyhow::Result<()> {
     let launch = get_target_launch_folder(root, profile);
 
     // TODO: make sure this resolve to the ROOT project's minecraft dependency!
-    let minecraft = tree.packages.iter().find(|p| p.get_full_name() == "minecraft").ok_or_else(|| anyhow::anyhow!("minecraft is not in the dependency list!"))?;
-    let game_version = minecraft
-        .ver
-        .clone();
-    let game_client_version = tree.root
+    let minecraft = tree
+        .packages
+        .iter()
+        .find(|p| p.get_full_name() == "minecraft")
+        .ok_or_else(|| anyhow::anyhow!("minecraft is not in the dependency list!"))?;
+    let game_version = minecraft.ver.clone();
+    let game_client_version = tree
+        .root
         .dependencies
         .get("minecraft-client")
         .ok_or_else(|| anyhow::anyhow!("minecraft-client is not in the dependency list!"))?
         .version
         .clone();
 
-    let asset_index = minecraft.extra.get("assetIndex").ok_or_else(|| anyhow::anyhow!("minecraft package doesn't have the assetIndex extra set?"))?;
+    let asset_index = minecraft.extra.get("assetIndex").ok_or_else(|| {
+        anyhow::anyhow!("minecraft package doesn't have the assetIndex extra set?")
+    })?;
 
     let launch_cfg = format!(
         r"commonProperties

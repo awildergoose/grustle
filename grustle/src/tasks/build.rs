@@ -49,7 +49,7 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     let profile = args.profile();
 
     let project = load_root_project(root)?;
-    let registry = load_default_registry();
+    let registry = load_default_registry()?;
     let jregistry = load_default_jregistry()?;
     let tree = load_project_tree(root, &project, &registry)?;
     generate_common_classpath(root, profile, &jregistry, &tree)?;
@@ -307,7 +307,10 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     iter_folder(&mut raw_resources, &root.join("src/client/resources"))?;
 
     let mut datagen_resources = vec![];
-    iter_folder(&mut datagen_resources, &root.join("src/main/generated/"))?;
+
+    if std::fs::exists(root.join("src/main/generated"))? {
+        iter_folder(&mut datagen_resources, &root.join("src/main/generated/"))?;
+    }
 
     for (_, task) in processes {
         progress.remove_task(task);
@@ -335,7 +338,7 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
     for (path, content) in &resources {
         // I'm incredibly sorry
         let binding = path.canonicalize()?.display().to_string();
-        let relative = binding
+        let mut relative = binding
             .trim_start_matches(
                 &root
                     .join("src")
@@ -353,8 +356,10 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                     .canonicalize()?
                     .display()
                     .to_string(),
-            )
-            .trim_start_matches(
+            );
+
+        if std::fs::exists(root.join("src").join("main").join("generated"))? {
+            relative = relative.trim_start_matches(
                 &root
                     .join("src")
                     .join("main")
@@ -362,9 +367,10 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                     .canonicalize()?
                     .display()
                     .to_string(),
-            )
-            .trim_start_matches('/')
-            .trim_start_matches('\\');
+            );
+        }
+
+        relative = relative.trim_start_matches('/').trim_start_matches('\\');
 
         if !relative.starts_with(".cache") {
             let to = target_classes.join(relative);
