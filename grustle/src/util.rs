@@ -45,7 +45,7 @@ impl SystemArchitecture {
     }
 }
 
-// Some software doesn't like Windows' extended path format :(
+// Some JREs don't like Windows' extended path format :(
 #[must_use]
 pub fn normalize_windows_path(path: &str) -> &str {
     path.strip_prefix(r"\\?\").unwrap_or(path)
@@ -158,26 +158,41 @@ clientArgs
 clientProperties
 	fabric.gameJarPath.client={}
 ",
-        launch.join("log4j.xml").canonicalize()?.display(), // log4j.configurationFile
-        jregistry
-            .resolve_file(root, profile, "minecraft", &game_version, "minecraft.jar")?
-            .canonicalize()?
-            .display(), // fabric.gameJarPath
-        get_target_classes_folder(root, profile)
-            .canonicalize()?
-            .display(), // fabric.classPathGroups
+        normalize_windows_path(
+            &launch
+                .join("log4j.xml")
+                .canonicalize()?
+                .display()
+                .to_string()
+        ), // log4j.configurationFile
+        normalize_windows_path(
+            &jregistry
+                .resolve_file(root, profile, "minecraft", &game_version, "minecraft.jar")?
+                .canonicalize()?
+                .display()
+                .to_string()
+        ), // fabric.gameJarPath
+        normalize_windows_path(
+            &get_target_classes_folder(root, profile)
+                .canonicalize()?
+                .display()
+                .to_string()
+        ), // fabric.classPathGroups
         std::env::var("GRUSTLE_ASSETS_DIRECTORY")
             .context("GRUSTLE_ASSETS_DIRECTORY is not set!")?, // assetsDir
-        jregistry
-            .resolve_file(
-                root,
-                profile,
-                "minecraft-client",
-                &game_client_version,
-                "minecraft-client.jar"
-            )?
-            .canonicalize()?
-            .display(), // fabric.gameJarPath.client
+        normalize_windows_path(
+            &jregistry
+                .resolve_file(
+                    root,
+                    profile,
+                    "minecraft-client",
+                    &game_client_version,
+                    "minecraft-client.jar"
+                )?
+                .canonicalize()?
+                .display()
+                .to_string()
+        ), // fabric.gameJarPath.client
     );
 
     std::fs::create_dir_all(&launch)?;

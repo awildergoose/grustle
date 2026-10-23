@@ -49,12 +49,18 @@ pub fn run(args: &ProgramRunSubCommand) -> anyhow::Result<()> {
             "-Dfabric.dli.config={}/launch.cfg",
             launch_folder.canonicalize()?.display()
         ))
-        // TODO: remove these, maybe?
-        .arg("--sun-misc-unsafe-memory-access=allow")
-        .arg("--enable-native-access=ALL-UNNAMED")
         .arg("-Dfile.encoding=UTF-8")
         .arg("-Duser.country=US")
         .arg("-Duser.language=en");
+
+    if let Ok(user_args) = std::env::var("GRUSTLE_RUN_ARGS")
+        && !user_args.is_empty()
+    {
+        // There's probably a way better way to do this but this is good enough for now :P
+        for arg in user_args.split(';') {
+            command = command.arg(arg);
+        }
+    }
 
     if args.server {
         command = command

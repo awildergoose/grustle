@@ -22,3 +22,8 @@
 - [ ] multi-version and multi-loader support (stonecutter-like preprocessor)
 - [ ] neoforge support
 - [ ] (way future goal) obf support + parchment mappings
+
+bugs to be fixed:
+- [ ] somewhere in the scripts something generates org.ow2.asm.* dependency versions as 9.8 for 9.10.1 for some reason
+- [ ] the project tree resolver doesn't warn about package versions at all? and sometimes just drops packages entirely (e.g. as a result of the above problem)
+- [ ] asm isn't in any generated minecraft or fabric toml?

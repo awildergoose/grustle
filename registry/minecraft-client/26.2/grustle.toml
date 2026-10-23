@@ -58,6 +58,11 @@ version = "26.2"
 "org.lwjgl.lwjgl-vulkan" = "3.4.1"
 "org.lwjgl.lwjgl" = "3.4.1"
 "org.slf4j.slf4j-api" = "2.0.17"
+"org.ow2.asm.asm" = "9.10.1"
+"org.ow2.asm.asm-analysis" = "9.10.1"
+"org.ow2.asm.asm-commons" = "9.10.1"
+"org.ow2.asm.asm-tree" = "9.10.1"
+"org.ow2.asm.asm-util" = "9.10.1"
 
 [artifact]
 runtime = ["minecraft-client.jar"]
