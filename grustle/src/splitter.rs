@@ -76,7 +76,8 @@ pub fn invoke_splitter(
         zip.write_all(&manifest.into_bytes())?;
 
         let bytes = zip.finish()?.into_inner();
-        std::fs::write(output, bytes)?;
+        #[allow(clippy::unnecessary_debug_formatting)] // Clippy is stupid!
+        std::fs::write(output, bytes).context(format!("writing jar to {output:?}"))?;
 
         Ok(())
     }
@@ -133,8 +134,12 @@ pub fn invoke_splitter(
         );
     }
 
-    let output_common = jregistry.resolve_path("minecraft", game_version)?;
-    let output_client = jregistry.resolve_path("minecraft-client", game_client_version)?;
+    let output_common = jregistry
+        .resolve_path("minecraft", game_version)?
+        .join("minecraft.jar");
+    let output_client = jregistry
+        .resolve_path("minecraft-client", game_client_version)?
+        .join("minecraft-client.jar");
 
     copy_entries(common_entries, &server_data, &output_common, "common")?;
     copy_entries(client_only_entries, &client_data, &output_client, "client")?;
