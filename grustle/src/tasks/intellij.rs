@@ -8,12 +8,11 @@ use crate::{
     util::{SystemArchitecture, normalize_windows_path},
 };
 
-// TODO: make this write the files required for a full IntelliJ project load
 pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
     let root = &args.root;
     let profile = args.profile();
 
-    let mut out = r#"<?xml version="1.0" encoding="UTF-8"?>
+    let mut iml = r#"<?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
     <component name="NewModuleRootManager" inherit-compiler-output="true">
         <exclude-output />
@@ -66,7 +65,7 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
         sources = sources.trim().to_owned();
 
         write!(
-            &mut out,
+            &mut iml,
             r#"<orderEntry type="module-library" scope="PROVIDED">
             <library>
                 <CLASSES>
@@ -82,13 +81,26 @@ pub fn run(args: &ProgramEmptySubCommand) -> anyhow::Result<()> {
         )?;
     }
 
-    out = out.trim().to_owned();
-
-    out += r"
+    iml = iml.trim().to_string();
+    iml += r"
     </component>
 </module>";
 
-    println!("{out}");
+    std::fs::create_dir_all(root.join(".idea"))?;
+    std::fs::write(root.join(".idea").join("project.iml"), iml)?;
+    std::fs::write(
+        root.join(".idea").join("modules.xml"),
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/project.iml" filepath="$PROJECT_DIR$/.idea/project.iml" />
+    </modules>
+  </component>
+</project>"#,
+    )?;
+
+    println!("IntelliJ project files have been created successfully!");
 
     Ok(())
 }

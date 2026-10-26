@@ -275,7 +275,7 @@ pub fn run(args: &ProgramBuildSubCommand) -> anyhow::Result<()> {
                         path.display()
                     ))?;
 
-                    if filename.starts_with("META-INF") {
+                    if filename.starts_with("META-INF/") {
                         continue;
                     }
 

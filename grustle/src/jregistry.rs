@@ -15,6 +15,7 @@ impl GrustleJRegistry {
         Self { root }
     }
 
+    /// this returns the path to the folder (not respecting the local aw folder)
     pub fn resolve_path(&self, name: &str, version: &str) -> anyhow::Result<PathBuf> {
         let split = name
             .split('.')
@@ -33,6 +34,7 @@ impl GrustleJRegistry {
         Ok(path)
     }
 
+    /// this returns the path to the jar file (respecting the local aw folder)
     pub fn resolve_file(
         &self,
         project_root: &Path,

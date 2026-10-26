@@ -123,6 +123,7 @@ pub enum ProgramSubCommand {
     Aw(ProgramEmptySubCommand),
     Intellij(ProgramEmptySubCommand),
     Sources(ProgramSourcesSubCommand),
+    Split(ProgramEmptySubCommand),
 }
 
 #[derive(Args, Debug)]

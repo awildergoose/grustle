@@ -6,3 +6,4 @@ pub mod jar;
 pub mod new;
 pub mod run;
 pub mod sources;
+pub mod split;

@@ -11,6 +11,7 @@ pub mod jregistry;
 pub mod preprocessing;
 pub mod project;
 pub mod registry;
+pub mod splitter;
 pub mod tasks;
 pub mod template;
 pub mod tweaker;
@@ -35,6 +36,7 @@ fn real_main() -> anyhow::Result<()> {
         ProgramSubCommand::Aw(args) => tasks::aw::run(&args),
         ProgramSubCommand::Intellij(args) => tasks::intellij::run(&args),
         ProgramSubCommand::Sources(args) => tasks::sources::run(&args),
+        ProgramSubCommand::Split(args) => tasks::split::run(&args),
     }
 }
 
