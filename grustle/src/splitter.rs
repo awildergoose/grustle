@@ -71,7 +71,7 @@ pub fn invoke_splitter(
         }
 
         let manifest =
-            format!("// Manifest-Version: 1.0\n// Fabric-Loom-Split-Environment-Name: {env}");
+            format!("Manifest-Version: 1.0\nFabric-Loom-Split-Environment-Name: {env}\n\n");
         zip.start_file("META-INF/MANIFEST.MF", options)?;
         zip.write_all(&manifest.into_bytes())?;
 
@@ -114,14 +114,29 @@ pub fn invoke_splitter(
     let (client_entries, client_data) = get_entries(&client, &mut client_zip)?;
     let (server_entries, server_data) = get_entries(&server, &mut server_zip)?;
 
-    let common_entries: HashSet<PathBuf> = client_entries
+    let mut common_entries: HashSet<PathBuf> = client_entries
         .intersection(&server_entries)
         .cloned()
         .collect();
-    let client_only_entries: HashSet<PathBuf> = client_entries
+    let mut client_only_entries: HashSet<PathBuf> = client_entries
         .difference(&server_entries)
         .cloned()
         .collect();
+
+    // https://github.com/FabricMC/fabric-loom/blob/dev/1.19/src/main/java/net/fabricmc/loom/configuration/providers/minecraft/SplitMinecraftProvider.java#L82
+    let shared_entries: Vec<PathBuf> = [
+        "version.json",
+        "assets/.mcassetsroot",
+        "assets/minecraft/lang/en_us.json",
+    ]
+    .iter()
+    .map(std::convert::Into::into)
+    .collect();
+
+    for entry in shared_entries {
+        common_entries.insert(entry.clone());
+        client_only_entries.insert(entry);
+    }
 
     if cfg!(debug_assertions) {
         let server_only_entries: HashSet<PathBuf> = server_entries
