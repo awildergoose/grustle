@@ -73,7 +73,7 @@ class LauncherLibraries(TypedDict):
     client: Required[list[Library]]
     common: Required[list[Library]]
     server: Required[list[Library]]
-    development: NotRequired[list[Library]]
+    development: NotRequired[list[Library]]  # (old versions don't have it)
 
 
 class MainClassBySide(TypedDict):
