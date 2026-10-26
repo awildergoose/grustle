@@ -245,29 +245,46 @@ pub fn load_project_tree(
         packages: &mut Vec<GrustleResolvedProject>,
         package: &GrustleProject,
         registry: &GrustleRegistry,
+        chain: &mut Vec<String>,
     ) -> anyhow::Result<()> {
+        fn format_chain(chain: &[String]) -> String {
+            "\n- ".to_owned() + &chain.join("\n- ")
+        }
+
         let parent_name = format!("{}.{}", package.package.group, package.package.name);
 
         if packages.iter().any(|p| p.get_full_name().eq(&parent_name)) {
             return Ok(());
         }
 
+        chain.push(package.get_full_name());
+
         for (dependency_name, dependency) in &package.dependencies {
             if *dependency_name == parent_name {
-                println!("circular dependency found! {dependency_name}");
-                break;
+                anyhow::bail!(
+                    "circular dependency found! ({dependency_name}) chain: {}",
+                    format_chain(chain)
+                );
             }
 
-            if packages
+            if let Some(dupe) = packages
                 .iter()
-                .any(|p| p.get_full_name().eq(dependency_name))
+                .find(|p| p.get_full_name().eq(dependency_name))
             {
-                continue;
+                if dupe.ver == dependency.version {
+                    continue;
+                }
+
+                // TODO: remove this when we have a proper resolver, maybe just pick the highest semver
+                anyhow::bail!(
+                    "multiple versions of the same dependency were found! ({dependency_name}) chain: {}",
+                    format_chain(chain)
+                );
             }
 
             let p = parse_project(&registry.resolve_package(dependency_name, &dependency.version)?)
                 .context(format!("loading {dependency_name}"))?;
-            resolve_dependencies(packages, &p, registry)?;
+            resolve_dependencies(packages, &p, registry, chain)?;
             let resolved = GrustleResolvedProject {
                 package: p.package,
                 dependencies: p.dependencies,
@@ -277,6 +294,8 @@ pub fn load_project_tree(
             };
             packages.push(resolved);
         }
+
+        chain.pop();
 
         Ok(())
     }
@@ -321,7 +340,7 @@ pub fn load_project_tree(
 
     let mut packages = vec![];
 
-    resolve_dependencies(&mut packages, project, registry)?;
+    resolve_dependencies(&mut packages, project, registry, &mut Vec::new())?;
 
     let tree = GrustleProjectTree {
         root: project.clone(),

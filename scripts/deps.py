@@ -104,13 +104,13 @@ for line in reg:
                         # elif fullName == "org.ow2.asm.asm-util":
                         #     version = "9.10.1"
                         elif fullName == "org.ow2.asm.asm":
-                            version = "9.8"
+                            version = "9.10.1"
                         elif fullName == "org.ow2.asm.asm-tree":
-                            version = "9.8"
+                            version = "9.10.1"
                         elif fullName == "org.ow2.asm.asm-commons":
-                            version = "9.8"
+                            version = "9.10.1"
                         elif fullName == "org.ow2.asm.asm-util":
-                            version = "9.8"
+                            version = "9.10.1"
 
                         if not version:
                             # this sucks
