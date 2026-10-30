@@ -27,9 +27,11 @@ def resolve_full_name(name: str) -> tuple[str, str, str, Optional[str]]:
     return (group, artifact, version, classifier)
 
 
-def resolve_repo(repo: str, group: str, artifact: str, version: str) -> str:
+def resolve_jar(repo: str, group: str, artifact: str, version: str, classifier: Optional[str]) -> str:
     def rep(s: str) -> str:
         return s.replace(".", "/")
+
+    cf = f"{classifier}/" if classifier else ""
 
     # https://maven.fabricmc.net/
     # org/ow2/asm
@@ -39,7 +41,24 @@ def resolve_repo(repo: str, group: str, artifact: str, version: str) -> str:
     # 9.10.1
     # /
     # asm-util-9.10.1.jar
-    return f"{repo}{rep(group)}/{artifact}/{version}/{artifact}-{version}.jar"
+    return f"{repo}{rep(group)}/{artifact}/{cf}{version}/{artifact}-{version}.jar"
+
+
+def resolve_pom(repo: str, group: str, artifact: str, version: str, classifier: Optional[str]) -> str:
+    def rep(s: str) -> str:
+        return s.replace(".", "/")
+
+    cf = f"{classifier}/" if classifier else ""
+
+    # https://maven.fabricmc.net/
+    # org/ow2/asm
+    # /
+    # asm-util
+    # /
+    # 9.10.1
+    # /
+    # asm-util-9.10.1.pom
+    return f"{repo}{rep(group)}/{artifact}/{cf}{version}/{artifact}-{version}.pom"
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):

@@ -18,6 +18,7 @@
 - [ ] make cachyflower (un)zip the caches instead of wasting precious I/O time
 - [ ] proper phase detection (e.g. check if we've created AWs yet in `build`)
 - [ ] improve the registry system by specifying download locations
+- [ ] per-version classtweakers
 - [ ] allow grustle to download dependencies
 - [ ] multi-version and multi-loader support (stonecutter-like preprocessor)
 - [ ] neoforge support

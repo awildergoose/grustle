@@ -1,13 +1,18 @@
+import os
+
 from typings import FabricLoaderResponse, VersionDict
-from shared import VERSION, CURRENT_OS, EnhancedJSONEncoder, LibraryDef, resolve_full_name, resolve_repo
+from shared import VERSION, CURRENT_OS, EnhancedJSONEncoder, LibraryDef, resolve_full_name, resolve_jar, resolve_pom
+from maven import parse_project
 import json
 import requests
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+TEST_DOWNLOADS = False
+ADD_FABRIC_API = True
+
 FABRIC_MAVEN = "https://maven.fabricmc.net/"
 MVNCEN_MAVEN = "https://repo1.maven.org/maven2/"
-TEST_DOWNLOADS = False
 
 version_info: VersionDict = json.load(open(f"{VERSION}.json"))
 libraries: list[LibraryDef] = []
@@ -48,7 +53,7 @@ libraries.append(LibraryDef(
     group=group,
     artifact=artifact,
     classifier=classifier,
-    dl=resolve_repo(FABRIC_MAVEN, group, artifact, version),
+    dl=resolve_jar(FABRIC_MAVEN, group, artifact, version, classifier),
 ))
 
 # name = fabric["intermediary"]["maven"]
@@ -63,7 +68,6 @@ libraries.append(LibraryDef(
 # ))
 
 # fabric-loom adds these in
-# /org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar"
 group = "org.jetbrains"
 artifact = "annotations"
 classifier = None
@@ -74,7 +78,7 @@ libraries.append(LibraryDef(
     artifact=artifact,
     classifier=classifier,
     version=version,
-    dl=resolve_repo(MVNCEN_MAVEN, group, artifact, version)
+    dl=resolve_jar(MVNCEN_MAVEN, group, artifact, version, classifier)
 ))
 
 group = "net.fabricmc"
@@ -86,7 +90,7 @@ libraries.append(LibraryDef(
     artifact=artifact,
     classifier=classifier,
     version=version,
-    dl=resolve_repo(FABRIC_MAVEN, group, artifact, version)
+    dl=resolve_jar(FABRIC_MAVEN, group, artifact, version, classifier)
 ))
 
 artifact = "dev-launch-injector"
@@ -97,7 +101,7 @@ libraries.append(LibraryDef(
     artifact=artifact,
     classifier=classifier,
     version=version,
-    dl=resolve_repo(FABRIC_MAVEN, group, artifact, version)
+    dl=resolve_jar(FABRIC_MAVEN, group, artifact, version, classifier)
 ))
 
 for sset in [
@@ -110,7 +114,7 @@ for sset in [
         repo = lib.get("url")
         if not repo:
             raise RuntimeError(f"{name} doesn't have a repo set")
-        dl = resolve_repo(repo, group, artifact, version)
+        dl = resolve_jar(repo, group, artifact, version, classifier)
 
         libraries.append(LibraryDef(
             version=version,
@@ -118,6 +122,35 @@ for sset in [
             artifact=artifact,
             classifier=classifier,
             dl=dl
+        ))
+
+# fabric-api
+if ADD_FABRIC_API:
+    pom = resolve_pom(FABRIC_MAVEN, "net.fabricmc",
+                      "fabric-api", "0.155.2+26.2", "fabric-api")
+    filename = pom.split("/")[-1]
+    if not os.path.exists(filename):
+        res = requests.get(pom)
+        res.raise_for_status()
+
+        with open(filename, "wb") as f:
+            f.write(res.content)
+
+    with open(filename, "rb") as f:
+        contents = f.read()
+        project = parse_project(contents)
+        dependencies = project.dependencies.dependency
+
+    for dep in dependencies:
+        if dep.artifactId == "fabric-api-deprecated":
+            continue
+        libraries.append(LibraryDef(
+            group=dep.groupId,
+            artifact=dep.artifactId,
+            version=dep.version,
+            classifier=dep.classifier,
+            dl=resolve_jar(FABRIC_MAVEN, dep.groupId,
+                           dep.artifactId, dep.version, dep.classifier)
         ))
 
 
@@ -156,6 +189,3 @@ out += "\n"
 
 with open("sample.txt", "w") as f:
     f.write(out)
-
-
-good = open("goodsample.txt", "r").read()
