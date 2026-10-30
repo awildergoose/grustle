@@ -1,12 +1,12 @@
-import os
-
-from typings import FabricLoaderResponse, VersionDict
-from shared import VERSION, CURRENT_OS, EnhancedJSONEncoder, LibraryDef, resolve_full_name, resolve_jar, resolve_pom
 from maven import parse_project
+from shared import VERSION, CURRENT_OS, EnhancedJSONEncoder, LibraryDef, resolve_full_name, resolve_jar, resolve_pom
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typings import FabricLoaderResponse, VersionDict
 import json
 import requests
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
 
 TEST_DOWNLOADS = False
 ADD_FABRIC_API = True
