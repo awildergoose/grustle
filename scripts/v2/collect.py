@@ -1,5 +1,5 @@
-from maven import parse_project
-from shared import VERSION, CURRENT_OS, EnhancedJSONEncoder, LibraryDef, resolve_full_name, resolve_jar, resolve_pom
+from maven import normalize_pom, parse_project
+from shared import VERSION, CURRENT_OS, EnhancedJSONEncoder, LibraryDef, resolve_cache_path, resolve_full_name, resolve_jar, resolve_pom
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typings import FabricLoaderResponse, VersionDict
@@ -117,15 +117,18 @@ for sset in [
 if ADD_FABRIC_API:
     pom = resolve_pom(FABRIC_MAVEN, "net.fabricmc",
                       "fabric-api", "0.155.2+26.2", "fabric-api")
-    filename = pom.split("/")[-1]
-    if not os.path.exists(filename):
+    path = resolve_cache_path(pom.split("/")[-1])
+
+    if not os.path.exists(path):
         res = requests.get(pom)
         res.raise_for_status()
 
-        with open(filename, "wb") as f:
+        with open(path, "wb") as f:
             f.write(res.content)
 
-    with open(filename, "rb") as f:
+    path = normalize_pom(path)
+
+    with open(path, "rb") as f:
         contents = f.read()
         project = parse_project(contents)
         libraries.append(LibraryDef(

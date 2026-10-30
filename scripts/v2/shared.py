@@ -61,6 +61,10 @@ def resolve_pom(repo: str, group: str, artifact: str, version: str, classifier: 
     return f"{repo}{rep(group)}/{artifact}/{cf}{version}/{artifact}-{version}.pom"
 
 
+def resolve_cache_path(filename: str) -> str:
+    return f"cache/{filename}"
+
+
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if dataclasses.is_dataclass(o):
