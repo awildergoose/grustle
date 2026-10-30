@@ -1,3 +1,4 @@
+from maven import Dependency
 from typings import Optional
 import dataclasses
 import json
@@ -9,12 +10,28 @@ VERSION = "26.2"
 
 
 @dataclasses.dataclass
-class LibraryDef:
+class S1LibraryDef:
+    repo: str
     group: str
     artifact: str
     version: str
     classifier: Optional[str]
     dl: str
+
+
+@dataclasses.dataclass
+class S2LibraryDef:
+    repo: str
+    group: str
+    artifact: str
+    version: str
+
+    classifiers: list[str]
+    dependencies: list[str]
+
+    runtime: list[str]
+    sources: list[str]
+    natives: list[str]
 
 
 def resolve_full_name(name: str) -> tuple[str, str, str, Optional[str]]:
@@ -27,20 +44,21 @@ def resolve_full_name(name: str) -> tuple[str, str, str, Optional[str]]:
     return (group, artifact, version, classifier)
 
 
+# excludes classifier
+def get_full_name(lib: S1LibraryDef) -> str:
+    return f"{lib.group}:{lib.artifact}:{lib.version}"
+
+
+# excludes classifier
+def get_full_name_mvn(lib: Dependency) -> str:
+    return f"{lib.groupId}:{lib.artifactId}:{lib.version}"
+
+
 def resolve_jar(repo: str, group: str, artifact: str, version: str, classifier: Optional[str]) -> str:
     def rep(s: str) -> str:
         return s.replace(".", "/")
 
     cf = f"{classifier}/" if classifier else ""
-
-    # https://maven.fabricmc.net/
-    # org/ow2/asm
-    # /
-    # asm-util
-    # /
-    # 9.10.1
-    # /
-    # asm-util-9.10.1.jar
     return f"{repo}{rep(group)}/{artifact}/{cf}{version}/{artifact}-{version}.jar"
 
 
@@ -50,14 +68,6 @@ def resolve_pom(repo: str, group: str, artifact: str, version: str, classifier: 
 
     cf = f"{classifier}/" if classifier else ""
 
-    # https://maven.fabricmc.net/
-    # org/ow2/asm
-    # /
-    # asm-util
-    # /
-    # 9.10.1
-    # /
-    # asm-util-9.10.1.pom
     return f"{repo}{rep(group)}/{artifact}/{cf}{version}/{artifact}-{version}.pom"
 
 

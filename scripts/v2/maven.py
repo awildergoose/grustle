@@ -1,7 +1,6 @@
 import subprocess
 
 from pydantic_xml import BaseXmlModel, element
-from shared import resolve_cache_path
 
 NSMAP = {"maven": "http://maven.apache.org/POM/4.0.0"}
 
@@ -10,7 +9,7 @@ class Dependency(BaseXmlModel, tag="dependency", ns="maven", nsmap=NSMAP):
     groupId: str = element()
     artifactId: str = element()
     version: str = element()
-    scope: str = element()
+    scope: str | None = element(default=None)
     classifier: str | None = element(default=None)
 
 
@@ -22,15 +21,19 @@ class Project(BaseXmlModel, tag="project", ns="maven", nsmap=NSMAP, search_mode=
     groupId: str = element()
     artifactId: str = element()
     version: str = element()
-    dependencies: Dependencies = element()
+    dependencies: Dependencies = element(default=Dependencies(dependency=[]))
 
 
 def parse_project(contents: bytes):
     return Project.from_xml(contents)
 
 
+def get_resolved_pom_path(path: str) -> str:
+    return f"{".".join(path.split(".")[:-1])}-resolved.pom"
+
+
 def normalize_pom(path: str) -> str:
-    output = f"{".".join(path.split(".")[:-1])}-resolved.pom"
+    output = get_resolved_pom_path(path)
     subprocess.run([
         "cmd",
         "/C"
