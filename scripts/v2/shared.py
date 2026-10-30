@@ -8,6 +8,15 @@ CURRENT_OS = "windows"  # windows, linux, osx
 VERSION = "26.2"
 
 
+@dataclasses.dataclass
+class LibraryDef:
+    group: str
+    artifact: str
+    version: str
+    classifier: Optional[str]
+    dl: str
+
+
 def resolve_full_name(name: str) -> tuple[str, str, str, Optional[str]]:
     split = name.split(":")
     group = split[0]

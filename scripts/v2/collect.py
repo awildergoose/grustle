@@ -1,23 +1,15 @@
-from dataclasses import dataclass
-import requests
-from typings import FabricLoaderResponse, Optional, VersionDict
-from shared import VERSION, CURRENT_OS, EnhancedJSONEncoder, resolve_full_name, resolve_repo
+from typings import FabricLoaderResponse, VersionDict
+from shared import VERSION, CURRENT_OS, EnhancedJSONEncoder, LibraryDef, resolve_full_name, resolve_repo
 import json
+import requests
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+FABRIC_MAVEN = "https://maven.fabricmc.net/"
+MVNCEN_MAVEN = "https://repo1.maven.org/maven2/"
 TEST_DOWNLOADS = False
 
-
-@dataclass
-class LibraryDef:
-    group: str
-    artifact: str
-    version: str
-    classifier: Optional[str]
-    dl: Optional[str]
-
-
 version_info: VersionDict = json.load(open(f"{VERSION}.json"))
-
 libraries: list[LibraryDef] = []
 
 for library in version_info["libraries"]:
@@ -56,7 +48,7 @@ libraries.append(LibraryDef(
     group=group,
     artifact=artifact,
     classifier=classifier,
-    dl=None,
+    dl=resolve_repo(FABRIC_MAVEN, group, artifact, version),
 ))
 
 # name = fabric["intermediary"]["maven"]
@@ -71,26 +63,41 @@ libraries.append(LibraryDef(
 # ))
 
 # fabric-loom adds these in
+# /org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar"
+group = "org.jetbrains"
+artifact = "annotations"
+classifier = None
+version = "26.0.2"
+
 libraries.append(LibraryDef(
-    group="org.jetbrains",
-    artifact="annotations",
-    classifier=None,
-    version="26.0.2",
-    dl="https://repo1.maven.org/maven2/org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar"
+    group=group,
+    artifact=artifact,
+    classifier=classifier,
+    version=version,
+    dl=resolve_repo(MVNCEN_MAVEN, group, artifact, version)
 ))
+
+group = "net.fabricmc"
+artifact = "fabric-log4j-util"
+version = "1.0.2"
+
 libraries.append(LibraryDef(
-    group="net.fabricmc",
-    artifact="fabric-log4j-util",
-    classifier=None,
-    version="1.0.2",
-    dl="https://maven.fabricmc.net/net/fabricmc/fabric-log4j-util/1.0.2/fabric-log4j-util-1.0.2.jar"
+    group=group,
+    artifact=artifact,
+    classifier=classifier,
+    version=version,
+    dl=resolve_repo(FABRIC_MAVEN, group, artifact, version)
 ))
+
+artifact = "dev-launch-injector"
+version = "0.2.1+build.8"
+
 libraries.append(LibraryDef(
-    group="net.fabricmc",
-    artifact="dev-launch-injector",
-    classifier=None,
-    version="0.2.1+build.8",
-    dl="https://maven.fabricmc.net/net/fabricmc/dev-launch-injector/0.2.1+build.8/dev-launch-injector-0.2.1+build.8.jar"
+    group=group,
+    artifact=artifact,
+    classifier=classifier,
+    version=version,
+    dl=resolve_repo(FABRIC_MAVEN, group, artifact, version)
 ))
 
 for sset in [
@@ -101,14 +108,9 @@ for sset in [
         name = lib["name"]
         group, artifact, version, classifier = resolve_full_name(name)
         repo = lib.get("url")
-        dl = None
-
-        if repo:
-            dl = resolve_repo(repo, group, artifact, version)
-
-            if TEST_DOWNLOADS:
-                dl_test = requests.head(dl)
-                dl_test.raise_for_status()
+        if not repo:
+            raise RuntimeError(f"{name} doesn't have a repo set")
+        dl = resolve_repo(repo, group, artifact, version)
 
         libraries.append(LibraryDef(
             version=version,
@@ -117,6 +119,28 @@ for sset in [
             classifier=classifier,
             dl=dl
         ))
+
+
+if TEST_DOWNLOADS:
+    def test(url):
+        for attempt in range(5):
+            response = requests.head(url, timeout=10)
+
+            if response.status_code == 429:
+                time.sleep(2 ** attempt)
+                continue
+
+            response.raise_for_status()
+            return url
+
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        futures = [pool.submit(test, lib.dl) for lib in libraries]
+
+        for future in as_completed(futures):
+            try:
+                print(future.result())
+            except Exception as exc:
+                print(f"Request failed: {exc}")
 
 json.dump(libraries, open("collected.json", "w"),
           cls=EnhancedJSONEncoder, indent=4)
