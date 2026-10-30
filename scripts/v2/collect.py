@@ -8,7 +8,7 @@ import requests
 import time
 import os
 
-TEST_DOWNLOADS = True
+TEST_DOWNLOADS = False
 ADD_FABRIC_API = True
 
 FABRIC_MAVEN = "https://maven.fabricmc.net/"
@@ -55,17 +55,6 @@ libraries.append(LibraryDef(
     classifier=classifier,
     dl=resolve_jar(FABRIC_MAVEN, group, artifact, version, classifier),
 ))
-
-# name = fabric["intermediary"]["maven"]
-# group, artifact, version, classifier = resolve_full_name(name)
-
-# libraries.append(LibraryDef(
-#     version=fabric["intermediary"]["version"],
-#     group=group,
-#     artifact=artifact,
-#     classifier=classifier,
-#     dl=None
-# ))
 
 # fabric-loom adds these in
 group = "org.jetbrains"
