@@ -8,7 +8,7 @@ import requests
 import time
 import os
 
-TEST_DOWNLOADS = False
+TEST_DOWNLOADS = True
 ADD_FABRIC_API = True
 
 FABRIC_MAVEN = "https://maven.fabricmc.net/"
@@ -139,6 +139,14 @@ if ADD_FABRIC_API:
     with open(filename, "rb") as f:
         contents = f.read()
         project = parse_project(contents)
+        libraries.append(LibraryDef(
+            group=project.groupId,
+            artifact=project.artifactId,
+            version=project.version,
+            classifier=None,
+            dl=resolve_jar(FABRIC_MAVEN, project.groupId,
+                           project.artifactId, project.version, None)
+        ))
         dependencies = project.dependencies.dependency
 
     for dep in dependencies:

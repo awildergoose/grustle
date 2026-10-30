@@ -16,6 +16,9 @@ class Dependencies(BaseXmlModel, tag="dependencies", ns="maven", nsmap=NSMAP):
 
 
 class Project(BaseXmlModel, tag="project", ns="maven", nsmap=NSMAP, search_mode="unordered"):
+    groupId: str = element()
+    artifactId: str = element()
+    version: str = element()
     dependencies: Dependencies = element()
 
 
